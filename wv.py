@@ -74,7 +74,7 @@ def get_radec_urls(ra, dec, minbright=None, maxbright=None):
 
     return urls
 
-def get_radec_pngs(ra, dec, outdir, gifname, minbright=None, maxbright=None):
+def one_wv_animation(ra, dec, outdir, gifname, minbright=None, maxbright=None):
 
     assert(os.path.exists(outdir))
 
