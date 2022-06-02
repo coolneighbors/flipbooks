@@ -60,10 +60,7 @@ def custom_params(ra, dec, minbright=None, maxbright=None):
 
     return params
 
-def get_radec_pngs(ra, dec, outdir, gifname, minbright=None, maxbright=None):
-
-    assert(os.path.exists(outdir))
-
+def get_radec_urls(ra, dec, minbright=None, maxbright=None):
     params = custom_params(ra, dec, minbright=minbright, maxbright=maxbright)
 
     res = requests.get(png_anim,params=params)
@@ -75,7 +72,14 @@ def get_radec_pngs(ra, dec, outdir, gifname, minbright=None, maxbright=None):
         url = "https://amnh-citsci-public.s3-us-west-2.amazonaws.com/"+lnk
         urls.append(url)
 
-    print(urls)
+    return urls
+
+def get_radec_pngs(ra, dec, outdir, gifname, minbright=None, maxbright=None):
+
+    assert(os.path.exists(outdir))
+
+    urls = get_radec_urls(ra, dec, minbright=None, maxbright=None)
+
     flist = []
     for url in urls:
         cmd = 'wget ' + url
