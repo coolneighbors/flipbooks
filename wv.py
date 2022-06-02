@@ -86,7 +86,16 @@ def _download_one_png(url, outdir):
 
     return fname_dest
 
-def one_wv_animation(ra, dec, outdir, gifname, minbright=None, maxbright=None):
+def gif_from_pngs(flist, gifname, duration=0.2):
+
+    images = []
+    for f in flist:
+        images.append(imageio.imread(f))
+
+    imageio.mimsave(gifname, images, duration=duration)
+
+def one_wv_animation(ra, dec, outdir, gifname, minbright=None,
+                     maxbright=None, duration=0.2):
 
     assert(os.path.exists(outdir))
 
@@ -97,9 +106,4 @@ def one_wv_animation(ra, dec, outdir, gifname, minbright=None, maxbright=None):
         fname_dest = _download_one_png(url, outdir)
         flist.append(fname_dest)
 
-    images = []
-    for f in flist:
-        images.append(imageio.imread(f))
-
-    imageio.mimsave(gifname, images, duration=0.2)
-
+    gif_from_pngs(flist, gifname, duration=duration)
