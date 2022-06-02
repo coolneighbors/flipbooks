@@ -77,12 +77,12 @@ def get_radec_urls(ra, dec, minbright=None, maxbright=None):
 def _download_one_png(url, outdir):
     # url here should be just a string, not an array or list of strings
 
-    cmd = 'wget ' + url
-    print(cmd)
-    os.system('wget ' + url)
     fname = os.path.basename(url)
     fname_dest = os.path.join(outdir, fname)
-    os.rename(fname, fname_dest)
+
+    r = requests.get(url, allow_redirects=True)
+
+    open(fname_dest, 'wb').write(r.content)
 
     return fname_dest
 
