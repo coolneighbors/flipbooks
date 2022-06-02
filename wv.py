@@ -3,6 +3,7 @@ import os
 import imageio
 
 png_anim = "https://vjxontvb73.execute-api.us-west-2.amazonaws.com/png-animation"
+amnh_base_url = "https://amnh-citsci-public.s3-us-west-2.amazonaws.com/"
 
 def default_params():
     params = {
@@ -69,7 +70,7 @@ def get_radec_urls(ra, dec, minbright=None, maxbright=None):
     print("PNG Links:")
     urls = []
     for lnk in res.json()["ims"]:
-        url = "https://amnh-citsci-public.s3-us-west-2.amazonaws.com/" + lnk
+        url = amnh_base_url + lnk
         urls.append(url)
 
     return urls
