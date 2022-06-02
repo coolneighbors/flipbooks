@@ -240,6 +240,7 @@ def one_wv_animation(ra, dec, outdir, gifname, minbright=None,
         into one argument that gives the full desired output file path.
         Currently, the GIF gets written into the current working directory. It
         would be better to make the GIF output directory configurable.
+        Would be nice to add some more 'logging' type of printouts.
 
     """
 

@@ -3,8 +3,6 @@
 from wv import one_wv_animation
 import argparse
 
-# auto-delete the PNGs once the GIF has been built?
-
 if __name__=="__main__":
     descr = 'generate one WiseView style unWISE image blink'
 
@@ -31,8 +29,12 @@ if __name__=="__main__":
     parser.add_argument('--duration', type=float, default=0.2,
                         help="Time in seconds per frame.")
 
+    parser.add_argument('--keep_pngs', default=False,
+                        action='store_true',
+                        help="Retain the PNGs after the GIF has been built?")
+
     args = parser.parse_args()
 
     one_wv_animation(args.ra[0], args.dec[0], args.outdir, args.gifname,
                      minbright=args.minbright, maxbright=args.maxbright,
-                     duration=args.duration)
+                     duration=args.duration, delete_pngs=(not args.keep_pngs))
