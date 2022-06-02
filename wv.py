@@ -145,7 +145,21 @@ def get_radec_urls(ra, dec, minbright=None, maxbright=None):
     return urls
 
 def _download_one_png(url, outdir):
-    # url here should be just a string, not an array or list of strings
+    """
+    Download one PNG image based on its URL.
+
+    Parameters
+    ----------
+        url : str
+            Download URL.
+        outdir : str
+            Output directory.
+
+    Notes
+    -----
+        'url' here should be just a string, not an array or list of strings.
+
+    """
 
     fname = os.path.basename(url)
     fname_dest = os.path.join(outdir, fname)
