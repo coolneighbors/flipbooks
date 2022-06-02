@@ -155,6 +155,11 @@ def _download_one_png(url, outdir):
         outdir : str
             Output directory.
 
+    Returns
+    -------
+        fname_dest : str
+            Destination file name to which the PNG was downloaded.
+
     Notes
     -----
         'url' here should be just a string, not an array or list of strings.
@@ -171,6 +176,25 @@ def _download_one_png(url, outdir):
     return fname_dest
 
 def gif_from_pngs(flist, gifname, duration=0.2):
+    """
+    Construct a GIF animation from a list of PNG files.
+
+    Parameters
+    ----------
+        flist : list
+            List of (full path) file names of PNG images from which to
+            construct the GIF animatino.
+        gifname : str
+            Output file name (full path) for the GIF animation.
+        duration : float
+            Time interval in seconds for each frame in the GIF blink (?).
+
+    Notes
+    -----
+         Order in which the PNGs appear in the GIF is dictated by the
+         order of the file names in 'flist'.
+
+    """
 
     import imageio
 
