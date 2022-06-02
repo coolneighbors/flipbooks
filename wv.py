@@ -218,7 +218,7 @@ def one_wv_animation(ra, dec, outdir, gifname, minbright=None,
         dec : float
             Dec in decimal degrees.
         outdir : str
-            Output directory.
+            Output directory **of the PNGs**.
         gifname : str
             Output file name (full path) for the GIF animation.
         minbright : float, optional
@@ -236,6 +236,8 @@ def one_wv_animation(ra, dec, outdir, gifname, minbright=None,
         already exist?
         'gifname' and 'outdir' arguments could potentially be combined
         into one argument that gives the full desired output file path.
+        Currently, the GIF gets written into the current working directory. It
+        would be better to make the GIF output directory configurable.
 
     """
 
