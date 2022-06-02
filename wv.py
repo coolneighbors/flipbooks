@@ -1,6 +1,5 @@
 import requests
 import os
-import imageio
 
 png_anim = "https://vjxontvb73.execute-api.us-west-2.amazonaws.com/png-animation"
 amnh_base_url = "https://amnh-citsci-public.s3-us-west-2.amazonaws.com/"
@@ -88,6 +87,10 @@ def _download_one_png(url, outdir):
     return fname_dest
 
 def gif_from_pngs(flist, gifname, duration=0.2):
+
+    import imageio
+
+    # add checks on whether the files in flist actually exist?
 
     images = []
     for f in flist:
