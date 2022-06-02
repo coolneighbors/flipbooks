@@ -208,6 +208,36 @@ def gif_from_pngs(flist, gifname, duration=0.2):
 
 def one_wv_animation(ra, dec, outdir, gifname, minbright=None,
                      maxbright=None, duration=0.2):
+    """
+    Create one WiseView animation at a desired central sky location.
+
+    Parameters
+    ----------
+        ra : float
+            RA in decimal degrees.
+        dec : float
+            Dec in decimal degrees.
+        outdir : str
+            Output directory.
+        gifname : str
+            Output file name (full path) for the GIF animation.
+        minbright : float, optional
+            WiseView image stretch lower pixel value. Default of None
+            picks up default value from default_params() utility.
+        maxbright : float, optional
+            WiseView image stretch upper pixel value. Default of None
+            picks up default value from default_params() utility.
+        duration : float
+            Time interval in seconds for each frame in the GIF blink (?).
+
+    Notes
+    -----
+        Should we make the output directory in the event that it doesn't
+        already exist?
+        'gifname' and 'outdir' arguments could potentially be combined
+        into one argument that gives the full desired output file path.
+
+    """
 
     assert(os.path.exists(outdir))
 
