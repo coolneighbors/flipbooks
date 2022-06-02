@@ -207,7 +207,7 @@ def gif_from_pngs(flist, gifname, duration=0.2):
     imageio.mimsave(gifname, images, duration=duration)
 
 def one_wv_animation(ra, dec, outdir, gifname, minbright=None,
-                     maxbright=None, duration=0.2):
+                     maxbright=None, duration=0.2, delete_pngs=True):
     """
     Create one WiseView animation at a desired central sky location.
 
@@ -227,8 +227,10 @@ def one_wv_animation(ra, dec, outdir, gifname, minbright=None,
         maxbright : float, optional
             WiseView image stretch upper pixel value. Default of None
             picks up default value from default_params() utility.
-        duration : float
+        duration : float, optional
             Time interval in seconds for each frame in the GIF blink (?).
+        delete_pngs : bool, optional
+            Delete downloaded PNGs after having used them to construct the GIF?
 
     Notes
     -----
@@ -251,3 +253,8 @@ def one_wv_animation(ra, dec, outdir, gifname, minbright=None,
         flist.append(fname_dest)
 
     gif_from_pngs(flist, gifname, duration=duration)
+
+    if delete_pngs:
+        print('Cleaning up...')
+        for f in flist:
+            os.remove(f)
