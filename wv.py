@@ -80,7 +80,7 @@ def _download_one_png(url, outdir):
     fname = os.path.basename(url)
     fname_dest = os.path.join(outdir, fname)
 
-    r = requests.get(url, allow_redirects=True)
+    r = requests.get(url)
 
     open(fname_dest, 'wb').write(r.content)
 
