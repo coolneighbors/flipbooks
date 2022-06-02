@@ -5,6 +5,21 @@ png_anim = "https://vjxontvb73.execute-api.us-west-2.amazonaws.com/png-animation
 amnh_base_url = "https://amnh-citsci-public.s3-us-west-2.amazonaws.com/"
 
 def default_params():
+    """
+    Get a dummy dictionary of WiseView API parameters.
+
+    Returns
+    -------
+        params : dict
+            Dummy dictionary of WiseView API parameters.
+
+    Notes
+    -----
+        Default (RA, Dec) are those of WISE 0855.
+        We should figure out what the units of "size" are.
+
+    """
+
     params = {
         "ra": 133.786245,
         "dec": -7.244372,
@@ -49,6 +64,35 @@ def default_params():
     return params
 
 def custom_params(ra, dec, minbright=None, maxbright=None):
+    """
+    Dictionary of WiseView API query parameters.
+
+    Parameters
+    ----------
+        ra : float
+            RA in decimal degrees.
+        dec : float
+            Dec in decimal degrees.
+        minbright : float, optional
+            WiseView image stretch lower pixel value. Default of None
+            picks up default value from default_params() utility.
+        maxbright : float, optional
+            WiseView image stretch upper pixel value. Default of None
+            picks up default value from default_params() utility.
+
+    Returns
+    -------
+        params : dict
+            WiseView API query parameters for requested sky location and image
+            stretch.
+
+    Notes
+    -----
+        Would be good to generalize so that more parameters can be customized
+        beyond just the central (RA, Dec) and the image stretch upper/lower
+        bounds.
+
+    """
 
     params = default_params()
     params['ra'] = ra
