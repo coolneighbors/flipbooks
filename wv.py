@@ -105,6 +105,29 @@ def custom_params(ra, dec, minbright=None, maxbright=None):
     return params
 
 def get_radec_urls(ra, dec, minbright=None, maxbright=None):
+    """
+    Get a list of WiseView image URLs for a desired blink.
+
+    Parameters
+    ----------
+        ra : float
+            RA in decimal degrees.
+        dec : float
+            Dec in decimal degrees.
+        minbright : float, optional
+            WiseView image stretch lower pixel value. Default of None
+            picks up default value from default_params() utility.
+        maxbright : float, optional
+            WiseView image stretch upper pixel value. Default of None
+            picks up default value from default_params() utility.
+
+    Returns
+    -------
+        urls : list
+            List of string URLs gathered from the WiseView API.
+
+    """
+
     params = custom_params(ra, dec, minbright=minbright, maxbright=maxbright)
 
     res = requests.get(png_anim,params=params)
