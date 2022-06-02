@@ -64,6 +64,9 @@ def get_radec_urls(ra, dec, minbright=None, maxbright=None):
     params = custom_params(ra, dec, minbright=minbright, maxbright=maxbright)
 
     res = requests.get(png_anim,params=params)
+
+    # what is going on with these printouts? do we need them?
+    # can they be made better?
     print("JSON Response:")
     print(res.json())
     print("PNG Links:")
