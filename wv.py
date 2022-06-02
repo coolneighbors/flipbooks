@@ -1,8 +1,8 @@
 import requests
-
-png_anim = "https://vjxontvb73.execute-api.us-west-2.amazonaws.com/png-animation"
 import os
 import imageio
+
+png_anim = "https://vjxontvb73.execute-api.us-west-2.amazonaws.com/png-animation"
 
 def default_params():
     params = {
@@ -69,10 +69,22 @@ def get_radec_urls(ra, dec, minbright=None, maxbright=None):
     print("PNG Links:")
     urls = []
     for lnk in res.json()["ims"]:
-        url = "https://amnh-citsci-public.s3-us-west-2.amazonaws.com/"+lnk
+        url = "https://amnh-citsci-public.s3-us-west-2.amazonaws.com/" + lnk
         urls.append(url)
 
     return urls
+
+def _download_one_png(url, outdir):
+    # url here should be just a string, not an array or list of strings
+
+    cmd = 'wget ' + url
+    print(cmd)
+    os.system('wget ' + url)
+    fname = os.path.basename(url)
+    fname_dest = os.path.join(outdir, fname)
+    os.rename(fname, fname_dest)
+
+    return fname_dest
 
 def one_wv_animation(ra, dec, outdir, gifname, minbright=None, maxbright=None):
 
@@ -82,12 +94,7 @@ def one_wv_animation(ra, dec, outdir, gifname, minbright=None, maxbright=None):
 
     flist = []
     for url in urls:
-        cmd = 'wget ' + url
-        print(cmd)
-        os.system('wget ' + url)
-        fname = os.path.basename(url)
-        fname_dest = os.path.join(outdir, fname)
-        os.rename(fname, fname_dest)
+        fname_dest = _download_one_png(url, outdir)
         flist.append(fname_dest)
 
     images = []
