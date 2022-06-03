@@ -24,7 +24,7 @@ def default_params():
         "ra": 133.786245,
         "dec": -7.244372,
         "band": 3,
-        "size": 64,
+        "size": 128,
         "max_dyr": 0,
         "minbright": -50.0000,
         "maxbright": 500.0000,
@@ -144,7 +144,7 @@ def get_radec_urls(ra, dec, minbright=None, maxbright=None):
 
     return urls
 
-def _download_one_png(url, outdir):
+def _download_one_png(url, outdir, fieldName):
     """
     Download one PNG image based on its URL.
 
@@ -166,7 +166,7 @@ def _download_one_png(url, outdir):
 
     """
 
-    fname = os.path.basename(url)
+    fname = os.path.basename(fieldName)
     fname_dest = os.path.join(outdir, fname)
 
     r = requests.get(url)
@@ -208,6 +208,9 @@ def gif_from_pngs(flist, gifname, duration=0.2):
 
 def one_wv_animation(ra, dec, outdir, gifname, minbright=None,
                      maxbright=None, duration=0.2, delete_pngs=True):
+    
+    #Counter, used to determine png chronology
+    counter = 0
     """
     Create one WiseView animation at a desired central sky location.
 
@@ -249,9 +252,12 @@ def one_wv_animation(ra, dec, outdir, gifname, minbright=None,
     urls = get_radec_urls(ra, dec, minbright=None, maxbright=None)
 
     flist = []
+    
     for url in urls:
-        fname_dest = _download_one_png(url, outdir)
+        fieldName='field-RA'+str(ra)+'-DEC'+str(dec)+'-'+str(counter)+'.png'
+        fname_dest = _download_one_png(url, outdir, fieldName)
         flist.append(fname_dest)
+        counter+=1
 
     gif_from_pngs(flist, gifname, duration=duration)
 

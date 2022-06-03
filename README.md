@@ -19,3 +19,8 @@ optional arguments:
   --duration DURATION   Time in seconds per frame.
   --keep_pngs           Retain the PNGs after the GIF has been built?
 ```
+
+Optional Usage:
+
+Reading from CSV - 
+In manifest.csv, put RA and DEC of objects in the RA and DEC columns 
