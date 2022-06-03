@@ -24,7 +24,7 @@ def default_params():
         "ra": 133.786245,
         "dec": -7.244372,
         "band": 3,
-        "size": 64,
+        "size": 128,
         "max_dyr": 0,
         "minbright": -50.0000,
         "maxbright": 500.0000,
@@ -254,7 +254,7 @@ def one_wv_animation(ra, dec, outdir, gifname, minbright=None,
     flist = []
     
     for url in urls:
-        fieldName='field-'+str(counter)+'.png'
+        fieldName='field-RA'+str(ra)+'-DEC'+str(dec)+'-'+str(counter)+'.png'
         fname_dest = _download_one_png(url, outdir, fieldName)
         flist.append(fname_dest)
         counter+=1
