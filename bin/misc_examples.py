@@ -1,4 +1,4 @@
-from wv import one_wv_animation
+from flipbooks.wv import one_wv_animation
 
 def wise0855():
     
