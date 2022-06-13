@@ -66,63 +66,45 @@ def default_params():
 
     return params
 
-def custom_params(ra, dec, minbright=None, maxbright=None):
+def custom_params(**kwargs):
     """
-    Dictionary of WiseView API query parameters.
+    Provides a customized dictionary of WiseView API query parameters based on the provided keyword arguments.
 
     Parameters
     ----------
-        ra : float
-            RA in decimal degrees.
-        dec : float
-            Dec in decimal degrees.
-        minbright : float, optional
-            WiseView image stretch lower pixel value. Default of None
-            picks up default value from default_params() utility.
-        maxbright : float, optional
-            WiseView image stretch upper pixel value. Default of None
-            picks up default value from default_params() utility.
+        kwargs : keyword arguments
+            Keyword arguments which are in default_parameters, otherwise it will raise an error. Even if the keyword
+            argument is given in uppercase, it will still work.
 
     Returns
     -------
         params : dict
-            WiseView API query parameters for requested sky location and image
-            stretch.
+            WiseView API query parameters for requested sky location and image stretch.
 
     Notes
     -----
-        Would be good to generalize so that more parameters can be customized
-        beyond just the central (RA, Dec) and the image stretch upper/lower
-        bounds.
-
+        This has been generalized to all possible parameters, assuming you know the names of the parameters you want to
+        modify are.
     """
 
     params = default_params()
-    params['ra'] = ra
-    params['dec'] = dec
-    if minbright is not None:
-        params['minbright'] = minbright
-    if maxbright is not None:
-        params['maxbright'] = maxbright
+
+    for key in kwargs:
+        if(key.lower() in params):
+            params[key.lower()] = kwargs[key]
+        else:
+            raise KeyError(f"The following key is not a valid parameter: {key}")
 
     return params
 
-def get_radec_urls(ra, dec, minbright=None, maxbright=None):
+def get_urls(wise_view_parameters):
     """
     Get a list of WiseView image URLs for a desired blink.
 
     Parameters
     ----------
-        ra : float
-            RA in decimal degrees.
-        dec : float
-            Dec in decimal degrees.
-        minbright : float, optional
-            WiseView image stretch lower pixel value. Default of None
-            picks up default value from default_params() utility.
-        maxbright : float, optional
-            WiseView image stretch upper pixel value. Default of None
-            picks up default value from default_params() utility.
+        wise_view_parameters : dict
+            WiseView API query parameters for requested sky location and image stretch.
 
     Returns
     -------
@@ -131,15 +113,15 @@ def get_radec_urls(ra, dec, minbright=None, maxbright=None):
 
     """
 
-    params = custom_params(ra, dec, minbright=minbright, maxbright=maxbright)
 
-    res = requests.get(png_anim,params=params)
+    res = requests.get(png_anim,params=wise_view_parameters)
 
     # what is going on with these printouts? do we need them?
     # can they be made better?
     #print("JSON Response:")
     #print(res.json())
     #print("PNG Links:")
+
     urls = []
     for lnk in res.json()["ims"]:
         url = amnh_base_url + lnk
@@ -222,25 +204,23 @@ def gif_from_pngs(flist, gifname, duration=0.2, scale_factor=1.0):
 
     imageio.mimsave(gifname, images, duration=duration)
 
-def png_set(ra, dec, outdir, minbright=None, maxbright=None,scale_factor=1.0,addGrid=False,gridSize=10):
+def png_set(wise_view_parameters, outdir, scale_factor=1.0, addGrid=False, gridSize=10):
     """
     Generates a set of PNG files for the available set of data from WiseView
 
     Parameters
     ----------
-        ra : float
-            RA in decimal degrees.
-        dec : float
-            Dec in decimal degrees.
-        minbright : float, optional
-            WiseView image stretch lower pixel value. Default of None
-            picks up default value from default_params() utility.
-        maxbright : float, optional
-            WiseView image stretch upper pixel value. Default of None
-            picks up default value from default_params() utility.
+        wise_view_parameters : dict
+            WiseView API query parameters for requested sky location and image stretch. Can be provide
+        outdir : str
+            Output directory of the PNG files
         scale_factor : float, optional
             PNG image size scaling factor, use integer values to avoid pixel-value interpolation.
             Uses Nearest-Neighbor algorithm.
+        addGrid : bool, optional
+            Boolean parameter which determines whether to overlay a grid on the PNG files
+        gridSize : float, optional
+            Number of pixels between each line in the grid.
 
     Returns
     -------
@@ -258,7 +238,10 @@ def png_set(ra, dec, outdir, minbright=None, maxbright=None,scale_factor=1.0,add
     if(not os.path.exists(outdir)):
         os.mkdir(outdir)
 
-    urls = get_radec_urls(ra, dec, minbright=minbright, maxbright=maxbright)
+    urls = get_urls(wise_view_parameters)
+
+    ra = wise_view_parameters['ra']
+    dec = wise_view_parameters['dec']
 
     flist = mpScript.downloadHandler(urls, ra, dec, outdir)
     
