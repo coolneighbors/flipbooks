@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='Flipbooks',
+    name='flipbooks',
     url='https://github.com/austinh2001/flipbooks.git',
     author='Aaron Meisner',
     author_email='aaron.meisner@noirlab.edu',
