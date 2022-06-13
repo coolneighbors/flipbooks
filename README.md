@@ -1,3 +1,17 @@
+# flipbooks
+
+A pipeline for downloading Cool Neighbors flipbook images.
+
+## environment setup
+
+```
+export PYTHONPATH=${PYTHONPATH}:PATH_TO_COOLNEIGHBORS/flipbooks/py
+````
+
+Where PATH_TO_COOLNEIGHBORS gives the path where your `flipbooks` repository checkout lives.
+
+## script to generate/write one local GIF image blink
+
 ```
 python one_wiseview_gif.py --help
 usage: one_wiseview_gif.py [-h] [--outdir OUTDIR] [--minbright MINBRIGHT] [--maxbright MAXBRIGHT] [--duration DURATION] [--keep_pngs] ra dec gifname

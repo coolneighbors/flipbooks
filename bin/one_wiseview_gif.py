@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from wv import one_wv_animation
+from flipbooks.wv import one_wv_animation
 import argparse
 
 if __name__=="__main__":
