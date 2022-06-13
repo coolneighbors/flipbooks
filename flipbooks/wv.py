@@ -2,8 +2,7 @@ import requests
 import os
 import shutil
 from PIL import Image
-import postProcessing
-import mpScript
+from flipbooks import mpScript
 
 png_anim = "https://vjxontvb73.execute-api.us-west-2.amazonaws.com/png-animation"
 amnh_base_url = "https://amnh-citsci-public.s3-us-west-2.amazonaws.com/"

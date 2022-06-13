@@ -15,7 +15,8 @@ def rescale(f,scale_factor):
         height = size[1]
         rescaled_size = (width * scale_factor, height * scale_factor)
         resize_png(f, rescaled_size)
-        
+
+
 #works with above
 def resize_png(filename,size):
     """
@@ -43,6 +44,7 @@ def resize_png(filename,size):
     resized_image.save(filename)
     return filename
 
+
 def addGrid(imname, step_count = 10):
     '''
     
@@ -61,8 +63,7 @@ def addGrid(imname, step_count = 10):
     None.
 
     '''
-    
-    
+
     with Image.open(imname) as image:
 
         # Draw some lines
@@ -85,6 +86,7 @@ def addGrid(imname, step_count = 10):
         del draw
     
         image.save(imname)
+
 
 if __name__ == '__main__':
     addGrid(input('Input Image Filename: '))

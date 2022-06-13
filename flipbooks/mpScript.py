@@ -6,8 +6,8 @@ Created on Fri Jun 10 14:53:00 2022
 """
 
 import multiprocessing as mp
-import wv
-import postProcessing
+from flipbooks import wv
+from flipbooks import postProcessing
 
 
 
