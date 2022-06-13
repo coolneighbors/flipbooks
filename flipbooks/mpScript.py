@@ -29,13 +29,13 @@ def downloadHandler(urls,ra,dec,outdir):
     #print(f"Program finished in {finish_time-start_time} seconds")
     return flist
 
+
 def scaleHandler(flist,scale_factor):
     pool = mp.Pool()
     processes = [pool.apply_async(postProcessing.rescale, args=(f,scale_factor)) for f in flist]
-    
-    
-    
-def gridHandlder(flist,gridSize):
+
+
+def gridHandler(flist,gridSize):
     pool = mp.Pool()
     processes = [pool.apply_async(postProcessing.addGrid, args=(f,gridSize)) for f in flist]
     

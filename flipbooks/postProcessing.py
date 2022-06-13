@@ -46,7 +46,7 @@ def resize_png(filename,size):
 
 
 def addGrid(imname, step_count = 10):
-    '''
+    """
     
     Post processing "shader" that adds a grid to an image.
     
@@ -62,7 +62,7 @@ def addGrid(imname, step_count = 10):
     -------
     None.
 
-    '''
+    """
 
     with Image.open(imname) as image:
 
