@@ -2,6 +2,6 @@
 flipbooks
 =========
 
-A pipeline for downloading Cool Neighbors flipbook images.
+A pipeline for downloading and modifying Cool Neighbors flipbook images.
 
 """
