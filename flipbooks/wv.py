@@ -9,18 +9,18 @@ amnh_base_url = "https://amnh-citsci-public.s3-us-west-2.amazonaws.com/"
 
 def default_params():
     """
-    Get a dummy dictionary of WiseView API parameters.
+    Get a default dictionary of WiseView API parameters.
 
     Returns
     -------
         params : dict
-            Dummy dictionary of WiseView API parameters.
+            Default dictionary of WiseView API parameters.
 
     Notes
     -----
         Default (RA, Dec) are those of WISE 0855.
-        We should figure out what the units of "size" are.
 
+        Size refers to the FOV of the image, in units of arcseconds.
     """
 
     params = {
@@ -69,6 +69,7 @@ def default_params():
 def custom_params(**kwargs):
     """
     Provides a customized dictionary of WiseView API query parameters based on the provided keyword arguments.
+    All unchanged parameters are set to their default values in default_params.
 
     Parameters
     ----------
@@ -294,7 +295,7 @@ def resize_png(filename,size):
     resized_image.save(filename)
     return filename
 
-def one_wv_animation(wise_view_parameters, outdir, gifname, duration=0.2, delete_pngs=True):
+def one_wv_animation(wise_view_parameters, outdir, gifname, duration=0.2, scale_factor=1.0, delete_pngs=True):
     """
     Create one WiseView animation at a desired central sky location.
 
@@ -304,11 +305,13 @@ def one_wv_animation(wise_view_parameters, outdir, gifname, duration=0.2, delete
             WiseView API query parameters for requested sky location and image stretch. Can be provided by
             default_params or custom_params.
         outdir : str
-            Output directory **of the PNGs**.
+            Output directory of the image frames.
         gifname : str
-            Output file name (full path) for the GIF animation.
+            Output path filename for the GIF animation.
         duration : float, optional
-            Time interval in seconds for each frame in the GIF blink (?).
+            Time interval in seconds for each frame in the GIF.
+        scale_factor : float, optional
+            Frame image size scaling factor.
         delete_pngs : bool, optional
             Delete downloaded PNGs after having used them to construct the GIF.
 
@@ -340,7 +343,7 @@ def one_wv_animation(wise_view_parameters, outdir, gifname, duration=0.2, delete
         flist.append(fname_dest)
         counter += 1
 
-    gif_from_pngs(flist, gifname, duration=duration)
+    gif_from_pngs(flist, gifname, duration=duration, scale_factor=scale_factor)
 
     if delete_pngs:
         print('Cleaning up...')

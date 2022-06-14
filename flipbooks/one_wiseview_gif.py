@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from flipbooks.wv import one_wv_animation
+from flipbooks.wv import one_wv_animation, custom_params
 import argparse
 
 if __name__=="__main__":
@@ -34,7 +34,5 @@ if __name__=="__main__":
                         help="Retain the PNGs after the GIF has been built?")
 
     args = parser.parse_args()
-
-    one_wv_animation(args.ra[0], args.dec[0], args.outdir, args.gifname,
-                     minbright=args.minbright, maxbright=args.maxbright,
-                     duration=args.duration, delete_pngs=(not args.keep_pngs))
+    wise_view_parameters = custom_params(ra=args.ra[0],dec=args.dec[0],minbright=args.minbright,maxbright=args.maxbright)
+    one_wv_animation(wise_view_parameters, args.outdir, args.gifname, duration=args.duration, delete_pngs=(not args.keep_pngs))
