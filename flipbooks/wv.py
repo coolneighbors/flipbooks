@@ -20,7 +20,7 @@ def default_params():
     -----
         Default (RA, Dec) are those of WISE 0855.
 
-        Size refers to the FOV of the image, in units of arcseconds.
+        Size refers to the pixel side-length of the image, which relates somehow to FOV.
     """
 
     params = {
@@ -240,8 +240,6 @@ def png_set(wise_view_parameters, outdir, scale_factor=1.0, addGrid=False, gridS
         just asserted that it existed.
     """
 
-    counter = 0
-
     if(not os.path.exists(outdir)):
         os.mkdir(outdir)
 
@@ -251,15 +249,6 @@ def png_set(wise_view_parameters, outdir, scale_factor=1.0, addGrid=False, gridS
     dec = wise_view_parameters['dec']
 
     flist = mpScript.downloadHandler(urls, ra, dec, outdir)
-    
-    #make sure 10 images are saved for each png - if less than 10, copy last frame until there are ten
-    savedURL=urls[len(urls)-1]
-    while len(flist) < 10:
-        counter+=1
-        
-        newFieldName='field-RA'+str(ra)+'-DEC'+str(dec)+'-'+str(counter)+'.png'
-        fname_dest = _download_one_png(savedURL, outdir, newFieldName)
-        flist.append(fname_dest)
 
     # Rescales PNGs
     if (scale_factor != 1.0):
