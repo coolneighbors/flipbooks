@@ -8,7 +8,7 @@ setup(
     # Needed to actually package something
     packages=['flipbooks'],
     # Needed for dependencies
-    install_requires=['requests','PILLOW','imageio', 'time'],
+    install_requires=['requests','PILLOW','imageio'],
     # *strongly* suggested for sharing
     version='0.7',
     # The license can be anything you like
