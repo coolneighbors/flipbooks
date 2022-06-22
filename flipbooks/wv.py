@@ -1,6 +1,7 @@
 import requests
 import os
 import shutil
+import time
 from PIL import Image
 from flipbooks import mpScript
 
@@ -131,9 +132,20 @@ def get_urls(wise_view_parameters):
     #print("PNG Links:")
 
     urls = []
-    for lnk in res.json()["ims"]:
-        url = amnh_base_url + lnk
-        urls.append(url)
+    
+    
+    try:
+        for lnk in res.json()["ims"]:
+            url = amnh_base_url + lnk
+            urls.append(url)
+    except KeyError:
+        print('Service Error, Trying Again')
+        print("JSON Response:")
+        print(res.json())
+        time.sleep(1)
+        urls = get_urls(wise_view_parameters)
+        
+    
 
     return urls
 
