@@ -8,9 +8,9 @@ setup(
     # Needed to actually package something
     packages=['flipbooks'],
     # Needed for dependencies
-    install_requires=['requests','PILLOW','imageio'],
+    install_requires=['requests','PILLOW','imageio', 'time'],
     # *strongly* suggested for sharing
-    version='0.6',
+    version='0.7',
     # The license can be anything you like
     license='MIT',
     description='A pipeline for downloading and modifying Cool Neighbors flipbook images.',
