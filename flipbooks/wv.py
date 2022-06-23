@@ -105,6 +105,23 @@ def generate_wv_url(wise_view_parameters):
     wise_view_template_url = "http://byw.tools/wiseview#ra={}&dec={}&size={}&band={}&speed={}&minbright={}&maxbright={}&window={}&diff_window={}&linear={}&color={}&zoom={}&border={}&gaia={}&invert={}&maxdyr={}&scandir={}&neowise={}&diff={}&outer_epochs={}&unique_window={}&smooth_scan={}&shift={}&pmra={}&pmdec={}&synth_a={}&synth_a_sub={}&synth_a_ra={}&synth_a_dec={}&synth_a_w1={}&synth_a_w2={}&synth_a_pmra={}&synth_a_pmdec={}&synth_a_mjd={}&synth_b={}&synth_b_sub={}&synth_b_ra={}&synth_b_dec={}&synth_b_w1={}&synth_b_w2={}&synth_b_pmra={}&synth_b_pmdec={}&synth_b_mjd={}"
     return wise_view_template_url.format(wise_view_parameters['ra'],wise_view_parameters['dec'],unWISE_pixel_ratio*wise_view_parameters['size'],wise_view_parameters['band'],500,wise_view_parameters['minbright'],wise_view_parameters['maxbright'],wise_view_parameters['window'],wise_view_parameters['diff_window'],1,"",9,0,0,wise_view_parameters['invert'],wise_view_parameters['max_dyr'],wise_view_parameters['scandir'],wise_view_parameters['neowise'],wise_view_parameters['diff'],wise_view_parameters['outer'],wise_view_parameters['unique'],wise_view_parameters['smooth_scan'],wise_view_parameters['shift'],wise_view_parameters['pmx'],wise_view_parameters['pmy'],wise_view_parameters['synth_a'],wise_view_parameters['synth_a_sub'],wise_view_parameters['synth_a_ra'],wise_view_parameters['synth_a_dec'],wise_view_parameters['synth_a_w1'],wise_view_parameters['synth_a_w2'],wise_view_parameters['synth_a_pmra'],wise_view_parameters['synth_a_pmdec'],wise_view_parameters['synth_a_mjd'],wise_view_parameters['synth_b'],wise_view_parameters['synth_b_sub'],wise_view_parameters['synth_b_ra'],wise_view_parameters['synth_b_dec'],wise_view_parameters['synth_b_w1'],wise_view_parameters['synth_b_w2'],wise_view_parameters['synth_b_pmra'],wise_view_parameters['synth_b_pmdec'],wise_view_parameters['synth_b_mjd'])
 
+def get_res(png_anim,wise_view_parameters, delay = 0):
+    time.sleep(delay)
+    try:
+        res = requests.get(png_anim,params=wise_view_parameters)
+    except ConnectionResetError:
+        delay *= 2
+        if delay == 0:
+            delay=5
+        elif delay >= 300:
+            delay = 300
+        print(f"AWS Connection Reset Error (initial response), Retrying in {delay} seconds...")
+        res = get_res(png_anim,wise_view_parameters,delay=delay)
+        print('Success')
+    
+    return res
+    
+
 def get_urls(wise_view_parameters):
     """
     Get a list of WiseView image URLs for a desired blink.
@@ -122,8 +139,9 @@ def get_urls(wise_view_parameters):
 
     """
 
-
-    res = requests.get(png_anim,params=wise_view_parameters)
+    
+    res = get_res(png_anim, wise_view_parameters)
+    
 
     # what is going on with these printouts? do we need them?
     # can they be made better?
@@ -139,15 +157,28 @@ def get_urls(wise_view_parameters):
             url = amnh_base_url + lnk
             urls.append(url)
     except KeyError:
-        print('Service Error, Trying Again')
-        print("JSON Response:")
-        print(res.json())
+        print('Service Error (no ims key, get_urls), Trying Again')
         time.sleep(1)
         urls = get_urls(wise_view_parameters)
+        print('Success')
         
-    
-
     return urls
+
+def req_get_url(url, delay=0):
+    time.sleep(delay)
+    try:
+        r = requests.get(url)
+    except ConnectionResetError:
+        delay *= 2
+        if delay == 0:
+            delay=5
+        elif delay >= 300:
+            delay = 300
+        print(f"AWS Request Reset Error (png download), Retrying in {delay} seconds...")
+        r = req_get_url(url,delay=delay)
+        print('Success')
+    return r
+
 
 def _download_one_png(url, outdir, fieldName):
     """
@@ -174,7 +205,7 @@ def _download_one_png(url, outdir, fieldName):
     fname = os.path.basename(fieldName)
     fname_dest = os.path.join(outdir, fname)
 
-    r = requests.get(url)
+    r = req_get_url(url)
 
     open(fname_dest, 'wb').write(r.content)
 
