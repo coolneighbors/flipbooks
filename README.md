@@ -20,9 +20,9 @@ If you are trying to modify flipbooks, or you just want to have an easily access
 
 Upon initialization of flipbooks, a local environment variable of PATH_TO_FLIPBOOKS is set with the working directory of your flipbooks repository. 
 
-As of version 0.7, flipbooks requires the following packages: 
+As of version 0.8, flipbooks requires the following packages: 
 ```
-requests, PILLOW, imageio, time
+requests, PILLOW, imageio
 ```
 ___
 
