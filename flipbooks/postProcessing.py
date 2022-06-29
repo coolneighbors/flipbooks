@@ -91,8 +91,6 @@ def applyGrid(imname, step_count = 10):
 def applyPNGModifications(flist, scale_factor, addGrid, gridCount):
     pool = mp.Pool()
     processes = [pool.apply_async(scalePNGsAndApplyGrid, args=(f, scale_factor, addGrid, gridCount)) for f in flist]
-    pool.close()
-    pool.join()
 
 
 def scalePNGsAndApplyGrid(f, scale_factor, addGrid, gridCount):
