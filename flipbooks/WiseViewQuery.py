@@ -148,8 +148,11 @@ class WiseViewQuery:
 
         """
 
-        urls = self.requestMetadata("ims")
-
+        urls_endings = self.requestMetadata("ims")
+        urls = []
+        for url_ending in urls_endings:
+            urls.append(self.amnh_base_url + url_ending)
+        
         return urls
 
 
