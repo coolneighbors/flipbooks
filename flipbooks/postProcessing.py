@@ -2,10 +2,13 @@
 """
 Created on Thu Jun  9 15:15:09 2022
 
+Multiprocessing additions on Fri Jun 10 14:53:00 2022
+
 @author: Noah Schapera
 """
-from PIL import Image, ImageDraw
 
+from PIL import Image, ImageDraw
+import multiprocessing as mp
 
 #rescales pngs
 def rescale(f,scale_factor):
@@ -17,7 +20,6 @@ def rescale(f,scale_factor):
         resize_png(f, rescaled_size)
 
 
-#works with above
 def resize_png(filename,size):
     """
        Overwrite PNG file with a particular width and height
@@ -38,14 +40,13 @@ def resize_png(filename,size):
 
         Could possibly implement a keep_aspect_ratio parameter, but our images should all be squares.
     """
-
-    im = Image.open(filename)
-    resized_image = im.resize(size,Image.Resampling.NEAREST)
-    resized_image.save(filename)
+    with Image.open(filename) as im:
+        resized_image = im.resize(size,Image.Resampling.NEAREST)
+        resized_image.save(filename)
     return filename
 
 
-def addGrid(imname, step_count = 10):
+def applyGrid(imname, step_count = 10):
     """
     
     Post processing "shader" that adds a grid to an image.
@@ -63,7 +64,6 @@ def addGrid(imname, step_count = 10):
     None.
 
     """
-
     with Image.open(imname) as image:
 
         # Draw some lines
@@ -84,9 +84,20 @@ def addGrid(imname, step_count = 10):
             draw.line(line, fill=128)
     
         del draw
-    
+
         image.save(imname)
 
 
-if __name__ == '__main__':
-    addGrid(input('Input Image Filename: '))
+def applyPNGModifications(flist, scale_factor, addGrid, gridCount):
+    pool = mp.Pool()
+    processes = [pool.apply_async(scalePNGsAndApplyGrid, args=(f, scale_factor, addGrid, gridCount)) for f in flist]
+    pool.close()
+    pool.join()
+
+
+def scalePNGsAndApplyGrid(f, scale_factor, addGrid, gridCount):
+    if(scale_factor != 1):
+        rescale(f, scale_factor)
+    if(addGrid):
+        applyGrid(f, gridCount)
+

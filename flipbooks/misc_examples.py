@@ -1,4 +1,4 @@
-from flipbooks.wv import one_wv_animation
+from flipbooks import WiseViewQuery
 
 def wise0855():
     
@@ -7,7 +7,8 @@ def wise0855():
 
   outdir = 'w0855'
   gifname = 'w0855.gif'
-  one_wv_animation(ra, dec, outdir, gifname)
+  wise_view_query = WiseViewQuery.WiseViewQuery(ra=ra,dec=dec)
+  wise_view_query.createWiseViewGIF(outdir, gifname)
 
 def w1930():
 
@@ -18,7 +19,8 @@ def w1930():
   outdir = 'w1930'
   gifname = 'w1930.gif'
 
-  one_wv_animation(ra, dec, outdir, gifname, minbright=-12.5, maxbright=125)
+  wise_view_query = WiseViewQuery.WiseViewQuery(ra=ra, dec=dec, minbright=-12.5, maxbright=125)
+  wise_view_query.createWiseViewGIF(outdir, gifname)
 
 def w2243():
 
@@ -29,7 +31,8 @@ def w2243():
   outdir = 'w2243'
   gifname = 'w2243.gif'
 
-  one_wv_animation(ra, dec, outdir, gifname, minbright=-12.5, maxbright=125)
+  wise_view_query = WiseViewQuery.WiseViewQuery(ra=ra, dec=dec, minbright=-12.5, maxbright=125)
+  wise_view_query.createWiseViewGIF(outdir, gifname)
 
 def w1553():
 
@@ -41,7 +44,8 @@ def w1553():
     outdir = 'w1553'
     gifname = 'w1553.gif'
 
-    one_wv_animation(ra, dec, outdir, gifname, minbright=-12.5, maxbright=125)
+    wise_view_query = WiseViewQuery.WiseViewQuery(ra=ra, dec=dec, minbright=-12.5, maxbright=125)
+    wise_view_query.createWiseViewGIF(outdir, gifname)
 
 def j0002():
 
@@ -53,7 +57,8 @@ def j0002():
     outdir = 'w0002'
     gifname = 'w0002.gif'
 
-    one_wv_animation(ra, dec, outdir, gifname, minbright=-12.5, maxbright=125)
+    wise_view_query = WiseViewQuery.WiseViewQuery(ra=ra, dec=dec, minbright=-12.5, maxbright=125)
+    wise_view_query.createWiseViewGIF(outdir, gifname)
 
 def j1936():
     # maybe a better crowded field example...
@@ -64,7 +69,8 @@ def j1936():
     outdir = 'w1936'
     gifname = 'w1936.gif'
 
-    one_wv_animation(ra, dec, outdir, gifname, minbright=-12.5, maxbright=125)
+    wise_view_query = WiseViewQuery.WiseViewQuery(ra=ra, dec=dec, minbright=-12.5, maxbright=125)
+    wise_view_query.createWiseViewGIF(outdir, gifname)
 
 def _ghost():
     
@@ -75,7 +81,8 @@ def _ghost():
     outdir = 'ghost'
     gifname = 'ghost.gif'
 
-    one_wv_animation(ra, dec, outdir, gifname, minbright=-12.5, maxbright=125)
+    wise_view_query = WiseViewQuery.WiseViewQuery(ra=ra, dec=dec, minbright=-12.5, maxbright=125)
+    wise_view_query.createWiseViewGIF(outdir, gifname)
 
 def _diff_spike():
 
@@ -85,4 +92,5 @@ def _diff_spike():
     outdir = 'diff_spike'
     gifname = 'diffraction_spike.gif'
 
-    one_wv_animation(ra, dec, outdir, gifname, minbright=-12.5, maxbright=125)
+    wise_view_query = WiseViewQuery.WiseViewQuery(ra=ra, dec=dec, minbright=-12.5, maxbright=125)
+    wise_view_query.createWiseViewGIF(outdir, gifname)
