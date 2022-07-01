@@ -46,11 +46,11 @@ def resize_png(filename,size):
     return filename
 
 
-def applyGrid(imname, step_count = 10):
+def applyGrid(imname, step_count = 12):
     """
-    
+
     Post processing "shader" that adds a grid to an image.
-    
+
 
     Parameters
     ----------
@@ -71,18 +71,18 @@ def applyGrid(imname, step_count = 10):
         y_start = 0
         y_end = image.height
         step_size = int(image.width / step_count)
-    
+        offset = (image.width % step_count) / 2
         for x in range(0, image.width, step_size):
-            line = ((x, y_start), (x, y_end))
+            line = ((x + offset, y_start), (x + offset, y_end))
             draw.line(line, fill=128)
-    
+
         x_start = 0
         x_end = image.width
-    
+
         for y in range(0, image.height, step_size):
-            line = ((x_start, y), (x_end, y))
+            line = ((x_start, y + offset), (x_end, y + offset))
             draw.line(line, fill=128)
-    
+
         del draw
 
         image.save(imname)

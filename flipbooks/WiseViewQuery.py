@@ -254,7 +254,7 @@ class WiseViewQuery:
 
         return flist
 
-    def downloadWiseViewData(self, outdir, scale_factor=1.0, addGrid=False, gridCount=10):
+    def downloadWiseViewData(self, outdir, scale_factor=1.0, addGrid=False, gridCount=12):
         """
         Generates a set of PNG files for the available set of data from WiseView (which is from the unWISE data)
 
@@ -268,7 +268,7 @@ class WiseViewQuery:
             addGrid : bool, optional
                 Boolean parameter which determines whether to overlay a grid on the PNG files
             gridCount : int, optional
-                Number of grid lines to generate on the image (height and width). The default is 10.
+                Number of grid lines to generate on the image (height and width). The default is 12.
 
         Returns
         -------
