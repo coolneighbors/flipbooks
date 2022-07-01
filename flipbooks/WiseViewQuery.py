@@ -114,6 +114,68 @@ class WiseViewQuery:
 
         return params
 
+    def generateSyntheticObject(self,**kwargs):
+        """
+        Sets the synth parameters in the current WiseView parameters dictionary and requests the corresponding JSON
+        again. If parameters are left as empty, they will be set to some pre-defined default values.
+
+        Parameters
+        ----------
+            kwargs : keyword arguments
+                Keyword arguments which are a part of the synth parameters in default_parameters, otherwise it will
+                raise an error. Even if the keyword argument is given in uppercase, it will still work.
+                Defaults:
+                synth_x_sub = 0
+                synth_x_ra = current RA
+                synth_x_dec = current DEC
+                synth_x_w1 = 99.0
+                synth_x_w2 = 13.0
+                synth_x_mjd = mjd of the first frame
+        Notes
+        -----
+
+        """
+
+        a_keys = ["synth_a_sub", "synth_a_ra", "synth_a_dec", "synth_a_w1", "synth_a_w2", "synth_a_pmra", "synth_a_pmdec", "synth_a_mjd"]
+        b_keys = ["synth_b_sub", "synth_b_ra", "synth_b_dec", "synth_b_w1", "synth_b_w2", "synth_b_pmra", "synth_b_pmdec", "synth_b_mjd"]
+        valid_keys = [*a_keys, *b_keys]
+        self.wise_view_parameters["synth_a"] = 1
+        for key in kwargs:
+            if (key.lower() in valid_keys):
+                if(key.lower() in a_keys):
+                    self.wise_view_parameters[key.lower()] = kwargs[key]
+                elif(key.lower() in b_keys):
+                    self.wise_view_parameters["synth_b"] = 1
+                    self.wise_view_parameters[key.lower()] = kwargs[key]
+            else:
+                raise KeyError(f"The following key is not a valid parameter: {key}. The available parameters are: {valid_keys}.")
+
+        if(self.wise_view_parameters["synth_a"] == 1):
+            if(self.wise_view_parameters["synth_a_ra"] == ""):
+                self.wise_view_parameters["synth_a_ra"] = self.wise_view_parameters["ra"]
+            if(self.wise_view_parameters["synth_a_dec"] == ""):
+                self.wise_view_parameters["synth_a_dec"] = self.wise_view_parameters["dec"]
+            if (self.wise_view_parameters["synth_a_w1"] == ""):
+                self.wise_view_parameters["synth_a_w1"] = 99.0
+            if (self.wise_view_parameters["synth_a_w2"] == ""):
+                self.wise_view_parameters["synth_a_w2"] = 13.0
+            if(self.wise_view_parameters["synth_a_mjd"] == ""):
+                self.wise_view_parameters["synth_a_mjd"] = self.JSONResponse["all_mjds"][0]
+
+        if(self.wise_view_parameters["synth_b"] == 1):
+            if (self.wise_view_parameters["synth_b_ra"] == ""):
+                self.wise_view_parameters["synth_b_ra"] = self.wise_view_parameters["ra"]
+            if (self.wise_view_parameters["synth_b_dec"] == ""):
+                self.wise_view_parameters["synth_b_dec"] = self.wise_view_parameters["dec"]
+            if (self.wise_view_parameters["synth_b_w1"] == ""):
+                self.wise_view_parameters["synth_b_w1"] = 99.0
+            if (self.wise_view_parameters["synth_b_w2"] == ""):
+                self.wise_view_parameters["synth_b_w2"] = 13.0
+            if (self.wise_view_parameters["synth_b_mjd"] == ""):
+                self.wise_view_parameters["synth_b_mjd"] = self.JSONResponse["all_mjds"][0]
+
+        self.JSONResponse = self.getJSONResponse()
+
     def getResponse(self, delay=0):
         time.sleep(delay)
         try:
