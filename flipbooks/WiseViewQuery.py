@@ -254,7 +254,7 @@ class WiseViewQuery:
 
         return flist
 
-    def downloadWiseViewData(self, outdir, scale_factor=1.0, addGrid=False, gridCount=12):
+    def downloadWiseViewData(self, outdir, scale_factor=1.0, addGrid=False, gridCount=5, gridType = "Solid", gridColor = (0,0,0)):
         """
         Generates a set of PNG files for the available set of data from WiseView (which is from the unWISE data)
 
@@ -266,9 +266,14 @@ class WiseViewQuery:
                 PNG image size scaling factor, use integer values to avoid pixel-value interpolation.
                 Uses Nearest-Neighbor algorithm.
             addGrid : bool, optional
-                Boolean parameter which determines whether to overlay a grid on the PNG files
+                Boolean parameter which determines whether to overlay a grid on the PNG files. Defaults to False.
             gridCount : int, optional
-                Number of grid lines to generate on the image (height and width). The default is 12.
+                Number of grid lines to generate on the image (height and width). The default is 5.
+            gridType : str, optional
+                A string which determines the type of grid to overlay, with the available grid options being Solid,
+                Intersection, and Dashed. Defaults to Solid.
+            gridColor : tuple, optional
+                A 3 integer element tuple which represents the RGB values of the color
 
         Returns
         -------
@@ -277,8 +282,8 @@ class WiseViewQuery:
 
         Notes
         -----
-            Has the functionality that if outdir doesn't currently exist, it will create it instead of previously where we
-            just asserted that it existed.
+            Has the functionality that if outdir doesn't currently exist, it will create it instead of previously where
+            we just asserted that it existed.
         """
 
         if (not os.path.exists(outdir)):
@@ -291,7 +296,7 @@ class WiseViewQuery:
 
         flist = self.downloadPNGs(urls, ra, dec, outdir)
 
-        postProcessing.applyPNGModifications(flist, scale_factor, addGrid, gridCount)
+        postProcessing.applyPNGModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor)
 
         return flist
 

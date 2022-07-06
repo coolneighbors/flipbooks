@@ -45,8 +45,7 @@ def resize_png(filename,size):
         resized_image.save(filename)
     return filename
 
-
-def applyGrid(imname, step_count = 12):
+def applyGrid(imname, grid_count = 12, grid_type = "Solid", color = (0,0,0)):
     """
 
     Post processing "shader" that adds a grid to an image.
@@ -56,46 +55,70 @@ def applyGrid(imname, step_count = 12):
     ----------
     imname : TYPE
         image filename.
-    step_count : TYPE, optional
-        The number of grid lines to generate on the image (height and width). The default is 10.
+    grid_count : TYPE, optional
+        The number of grid boxes to generate along each axis.
 
     Returns
     -------
     None.
 
     """
+
     with Image.open(imname) as image:
-
-        # Draw some lines
         draw = ImageDraw.Draw(image)
-        y_start = 0
-        y_end = image.height
-        step_size = int(image.width / step_count)
-        offset = (image.width % step_count) / 2
-        for x in range(0, image.width, step_size):
-            line = ((x + offset, y_start), (x + offset, y_end))
-            draw.line(line, fill=128)
+        grid_side_length = int((image.width - (grid_count + 1)) / (grid_count))
+        step_size = grid_side_length + 1
+        offset = int((image.width % ((grid_side_length * grid_count) + (grid_count+1))) / 2)
+        if(grid_type == "Solid"):
+            for x in range(0, image.width, step_size):
+                line = ((x + offset, 0), (x + offset, image.height))
+                draw.line(line, fill=color)
 
-        x_start = 0
-        x_end = image.width
+            for y in range(0, image.height, step_size):
+                line = ((0, y + offset), (image.width, y + offset))
+                draw.line(line, fill=color)
 
-        for y in range(0, image.height, step_size):
-            line = ((x_start, y + offset), (x_end, y + offset))
-            draw.line(line, fill=128)
+        elif(grid_type == "Intersection"):
+            for x in range(0, image.width+1, step_size):
+                for y in range(0, image.height+1, step_size):
+                    cross_size = 10
+                    intersection_coordinate = (x + offset, y + offset)
+                    intersection_x, intersection_y = intersection_coordinate
+                    horizontal_line = ((intersection_x - cross_size, intersection_y), (intersection_x + cross_size, intersection_y))
+                    vertical_line = ((intersection_x, intersection_y - cross_size), (intersection_x, intersection_y + cross_size))
+                    draw.line(horizontal_line, fill=color)
+                    draw.line(vertical_line, fill=color)
+
+        elif(grid_type == "Dashed"):
+            reduced_width = image.width - (grid_count + 1)
+            dashes_per_grid_side = 5
+            dash_spacing = 20
+            dash_length = int((((reduced_width/grid_count)+2)-(dashes_per_grid_side-1)*dash_spacing)/dashes_per_grid_side)
+            for x in range(0, image.width, step_size):
+                for y in range(0, image.height, dash_length+dash_spacing):
+                    line = ((x + offset, y + offset), (x + offset, y + offset + dash_length))
+                    draw.line(line, fill=color)
+
+            for y in range(0, image.height, step_size):
+                for x in range(0, image.width, dash_length+dash_spacing):
+                    line = ((x + offset, y + offset), (x + offset + dash_length, y + offset))
+                    draw.line(line, fill=color)
+        else:
+            raise TypeError(f"Invalid Grid type: {grid_type}. Should be Solid, Intersection, or Dashed.")
 
         del draw
 
         image.save(imname)
 
 
-def applyPNGModifications(flist, scale_factor, addGrid, gridCount):
+def applyPNGModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor):
     pool = mp.Pool()
-    processes = [pool.apply_async(scalePNGsAndApplyGrid, args=(f, scale_factor, addGrid, gridCount)) for f in flist]
+    processes = [pool.apply_async(scalePNGsAndApplyGrid, args=(f, scale_factor, addGrid, gridCount, gridType, gridColor)) for f in flist]
 
 
-def scalePNGsAndApplyGrid(f, scale_factor, addGrid, gridCount):
+def scalePNGsAndApplyGrid(f, scale_factor, addGrid, gridCount, gridType, gridColor):
     if(scale_factor != 1):
         rescale(f, scale_factor)
     if(addGrid):
-        applyGrid(f, gridCount)
+        applyGrid(f, gridCount, gridType, gridColor)
 
