@@ -9,7 +9,7 @@ import time
 
 import requests
 import multiprocessing as mp
-from PIL.Image import Image
+from PIL import Image
 from flipbooks import postProcessing
 
 class WiseViewQuery:
