@@ -295,10 +295,15 @@ class WiseViewQuery:
         dec = self.wise_view_parameters['dec']
 
         flist = self.downloadPNGs(urls, ra, dec, outdir)
-
+        size_list = []
+        for f in flist:
+            with Image.open(f) as image:
+                width = image.width * scale_factor
+                height = image.height * scale_factor
+                size_list.append((width,height))
         postProcessing.applyPNGModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor)
 
-        return flist
+        return flist, size_list
 
     @classmethod
     def createGIF(cls, flist, gifname, duration=0.2, scale_factor=1.0):
