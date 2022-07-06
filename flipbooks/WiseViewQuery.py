@@ -9,7 +9,7 @@ import time
 
 import requests
 import multiprocessing as mp
-from PIL.Image import Image
+from PIL import Image
 from flipbooks import postProcessing
 
 class WiseViewQuery:
@@ -316,7 +316,7 @@ class WiseViewQuery:
 
         return flist
 
-    def downloadWiseViewData(self, outdir, scale_factor=1.0, addGrid=False, gridCount=12):
+    def downloadWiseViewData(self, outdir, scale_factor=1.0, addGrid=False, gridCount=5, gridType = "Solid", gridColor = (0,0,0)):
         """
         Generates a set of PNG files for the available set of data from WiseView (which is from the unWISE data)
 
@@ -328,9 +328,14 @@ class WiseViewQuery:
                 PNG image size scaling factor, use integer values to avoid pixel-value interpolation.
                 Uses Nearest-Neighbor algorithm.
             addGrid : bool, optional
-                Boolean parameter which determines whether to overlay a grid on the PNG files
+                Boolean parameter which determines whether to overlay a grid on the PNG files. Defaults to False.
             gridCount : int, optional
-                Number of grid lines to generate on the image (height and width). The default is 12.
+                Number of grid lines to generate on the image (height and width). The default is 5.
+            gridType : str, optional
+                A string which determines the type of grid to overlay, with the available grid options being Solid,
+                Intersection, and Dashed. Defaults to Solid.
+            gridColor : tuple, optional
+                A 3 integer element tuple which represents the RGB values of the color
 
         Returns
         -------
@@ -339,8 +344,8 @@ class WiseViewQuery:
 
         Notes
         -----
-            Has the functionality that if outdir doesn't currently exist, it will create it instead of previously where we
-            just asserted that it existed.
+            Has the functionality that if outdir doesn't currently exist, it will create it instead of previously where
+            we just asserted that it existed.
         """
 
         if (not os.path.exists(outdir)):
@@ -352,10 +357,15 @@ class WiseViewQuery:
         dec = self.wise_view_parameters['dec']
 
         flist = self.downloadPNGs(urls, ra, dec, outdir)
+        size_list = []
+        for f in flist:
+            with Image.open(f) as image:
+                width = image.width * scale_factor
+                height = image.height * scale_factor
+                size_list.append((width,height))
+        postProcessing.applyPNGModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor)
 
-        postProcessing.applyPNGModifications(flist, scale_factor, addGrid, gridCount)
-
-        return flist
+        return flist, size_list
 
     @classmethod
     def createGIF(cls, flist, gifname, duration=0.2, scale_factor=1.0):
@@ -456,7 +466,7 @@ class WiseViewQuery:
     def generateWiseViewURL(self):
         unWISE_pixel_ratio = 2.75
         wise_view_template_url = "http://byw.tools/wiseview#ra={}&dec={}&size={}&band={}&speed={}&minbright={}&maxbright={}&window={}&diff_window={}&linear={}&color={}&zoom={}&border={}&gaia={}&invert={}&maxdyr={}&scandir={}&neowise={}&diff={}&outer_epochs={}&unique_window={}&smooth_scan={}&shift={}&pmra={}&pmdec={}&synth_a={}&synth_a_sub={}&synth_a_ra={}&synth_a_dec={}&synth_a_w1={}&synth_a_w2={}&synth_a_pmra={}&synth_a_pmdec={}&synth_a_mjd={}&synth_b={}&synth_b_sub={}&synth_b_ra={}&synth_b_dec={}&synth_b_w1={}&synth_b_w2={}&synth_b_pmra={}&synth_b_pmdec={}&synth_b_mjd={}"
-        return wise_view_template_url.format(self.wise_view_parameters['ra'], self.wise_view_parameters['dec'],unWISE_pixel_ratio * self.wise_view_parameters['size'],self.wise_view_parameters['band'], 500, self.wise_view_parameters['minbright'],self.wise_view_parameters['maxbright'], self.wise_view_parameters['window'],self.wise_view_parameters['diff_window'], 1, "", 9, 0, 0,self.wise_view_parameters['invert'], self.wise_view_parameters['max_dyr'],self.wise_view_parameters['scandir'], self.wise_view_parameters['neowise'],self.wise_view_parameters['diff'], self.wise_view_parameters['outer'],self.wise_view_parameters['unique'], self.wise_view_parameters['smooth_scan'],self.wise_view_parameters['shift'], self.wise_view_parameters['pmx'],self.wise_view_parameters['pmy'], self.wise_view_parameters['synth_a'],self.wise_view_parameters['synth_a_sub'], self.wise_view_parameters['synth_a_ra'],self.wise_view_parameters['synth_a_dec'], self.wise_view_parameters['synth_a_w1'],self.wise_view_parameters['synth_a_w2'], self.wise_view_parameters['synth_a_pmra'],self.wise_view_parameters['synth_a_pmdec'], self.wise_view_parameters['synth_a_mjd'],self.wise_view_parameters['synth_b'], self.wise_view_parameters['synth_b_sub'],self.wise_view_parameters['synth_b_ra'], self.wise_view_parameters['synth_b_dec'],self.wise_view_parameters['synth_b_w1'], self.wise_view_parameters['synth_b_w2'],self.wise_view_parameters['synth_b_pmra'],self.wise_view_parameters['synth_b_pmdec'], self.wise_view_parameters['synth_b_mjd'])
+        return wise_view_template_url.format(self.wise_view_parameters['ra'], self.wise_view_parameters['dec'],unWISE_pixel_ratio * self.wise_view_parameters['size'],self.wise_view_parameters['band'], 125, self.wise_view_parameters['minbright'],self.wise_view_parameters['maxbright'], self.wise_view_parameters['window'],self.wise_view_parameters['diff_window'], 1, "", 9, 0, 0,self.wise_view_parameters['invert'], self.wise_view_parameters['max_dyr'],self.wise_view_parameters['scandir'], self.wise_view_parameters['neowise'],self.wise_view_parameters['diff'], self.wise_view_parameters['outer'],self.wise_view_parameters['unique'], self.wise_view_parameters['smooth_scan'],self.wise_view_parameters['shift'], self.wise_view_parameters['pmx'],self.wise_view_parameters['pmy'], self.wise_view_parameters['synth_a'],self.wise_view_parameters['synth_a_sub'], self.wise_view_parameters['synth_a_ra'],self.wise_view_parameters['synth_a_dec'], self.wise_view_parameters['synth_a_w1'],self.wise_view_parameters['synth_a_w2'], self.wise_view_parameters['synth_a_pmra'],self.wise_view_parameters['synth_a_pmdec'], self.wise_view_parameters['synth_a_mjd'],self.wise_view_parameters['synth_b'], self.wise_view_parameters['synth_b_sub'],self.wise_view_parameters['synth_b_ra'], self.wise_view_parameters['synth_b_dec'],self.wise_view_parameters['synth_b_w1'], self.wise_view_parameters['synth_b_w2'],self.wise_view_parameters['synth_b_pmra'],self.wise_view_parameters['synth_b_pmdec'], self.wise_view_parameters['synth_b_mjd'])
 
     def __str__(self):
         return str(self.wise_view_parameters)
