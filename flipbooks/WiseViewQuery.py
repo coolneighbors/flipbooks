@@ -407,7 +407,6 @@ class WiseViewQuery:
     def restartRequestPool(self):
         self.pool.close()
         self.pool.join()
-        self.pool = mp.Pool()
 
     def __str__(self):
         return str(self.wise_view_parameters)
