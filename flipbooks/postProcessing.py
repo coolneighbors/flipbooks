@@ -111,8 +111,9 @@ def applyGrid(imname, grid_count = 12, grid_type = "Solid", color = (0,0,0)):
         image.save(imname)
 
 
-def applyPNGModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor, pool = mp.Pool()):
-    processes = [pool.apply_async(scalePNGsAndApplyGrid, callback=print("Done"), args=(f, scale_factor, addGrid, gridCount, gridType, gridColor)) for f in flist]
+def applyPNGModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor):
+    pool = mp.Pool()
+    processes = [pool.apply_async(scalePNGsAndApplyGrid, args=(f, scale_factor, addGrid, gridCount, gridType, gridColor)) for f in flist]
 
 
 def scalePNGsAndApplyGrid(f, scale_factor, addGrid, gridCount, gridType, gridColor):
