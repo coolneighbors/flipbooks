@@ -55,7 +55,7 @@ class WiseViewQuery:
             "scandir": 0,
             "outer": 0,
             "neowise": 0,
-            "window": 1,
+            "window": 0.5,
             "diff_window": 1,
             "unique": 1,
             "smooth_scan": 0,
