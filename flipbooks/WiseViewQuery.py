@@ -12,6 +12,8 @@ import multiprocessing as mp
 from PIL import Image
 from flipbooks import postProcessing
 
+unWISE_pixel_ratio = 2.75
+
 class WiseViewQuery:
 
     png_anim = "https://vjxontvb73.execute-api.us-west-2.amazonaws.com/png-animation"
@@ -53,7 +55,7 @@ class WiseViewQuery:
             "scandir": 0,
             "outer": 0,
             "neowise": 0,
-            "window": 0.5,
+            "window": 1,
             "diff_window": 1,
             "unique": 1,
             "smooth_scan": 0,
@@ -463,10 +465,78 @@ class WiseViewQuery:
             for f in flist:
                 os.remove(f)
 
+    @classmethod
+    def FOVToPixelSize(cls, FOV):
+        """
+        Calculate the corresponding pixel size of a given FOV (in arcseconds).
+
+        Parameters
+        ----------
+            FOV : float
+                Field of view in arcseconds.
+
+        Returns
+        -------
+            pixel_size : int
+                Side length in pixels
+
+        Notes
+        -----
+            Since WiseView uses the unWISE Catalog, it has a pixel ratio of ~2.75 arcseconds per pixel.
+            Notice, since pixel size must be an integer, this conversion can not be exact for all FOVs.
+            In general, for some pixel_size, it can correspond to an FOV of FOV±2.75 arcseconds (depending on how you
+            round to an integer). Since the int casting truncates the value of FOV / unwise_pixel_ratio, this means our
+            pixel_size can correspond to an FOV between FOV-2.75 arcseconds and FOV arcseconds.
+        """
+
+        pixel_size = int(FOV / unWISE_pixel_ratio)
+        return pixel_size
+
+    @classmethod
+    def PixelSizeToFOV(cls, pixel_size):
+        """
+        Calculate the corresponding Field of View from a provided pixel_size.
+
+        Parameters
+        ----------
+            pixel_size : int
+                Side length in pixels
+
+        Returns
+        -------
+            FOV : float
+                Field of view in arcseconds.
+
+        Notes
+        -----
+            Since WiseView uses the unWISE Catalog, it has a pixel ratio of ~2.75 arcseconds per pixel.
+        """
+
+        FOV = unWISE_pixel_ratio * pixel_size
+        return FOV
+
     def generateWiseViewURL(self):
-        unWISE_pixel_ratio = 2.75
         wise_view_template_url = "http://byw.tools/wiseview#ra={}&dec={}&size={}&band={}&speed={}&minbright={}&maxbright={}&window={}&diff_window={}&linear={}&color={}&zoom={}&border={}&gaia={}&invert={}&maxdyr={}&scandir={}&neowise={}&diff={}&outer_epochs={}&unique_window={}&smooth_scan={}&shift={}&pmra={}&pmdec={}&synth_a={}&synth_a_sub={}&synth_a_ra={}&synth_a_dec={}&synth_a_w1={}&synth_a_w2={}&synth_a_pmra={}&synth_a_pmdec={}&synth_a_mjd={}&synth_b={}&synth_b_sub={}&synth_b_ra={}&synth_b_dec={}&synth_b_w1={}&synth_b_w2={}&synth_b_pmra={}&synth_b_pmdec={}&synth_b_mjd={}"
-        return wise_view_template_url.format(self.wise_view_parameters['ra'], self.wise_view_parameters['dec'],unWISE_pixel_ratio * self.wise_view_parameters['size'],self.wise_view_parameters['band'], 125, self.wise_view_parameters['minbright'],self.wise_view_parameters['maxbright'], self.wise_view_parameters['window'],self.wise_view_parameters['diff_window'], 1, "", 9, 0, 0,self.wise_view_parameters['invert'], self.wise_view_parameters['max_dyr'],self.wise_view_parameters['scandir'], self.wise_view_parameters['neowise'],self.wise_view_parameters['diff'], self.wise_view_parameters['outer'],self.wise_view_parameters['unique'], self.wise_view_parameters['smooth_scan'],self.wise_view_parameters['shift'], self.wise_view_parameters['pmx'],self.wise_view_parameters['pmy'], self.wise_view_parameters['synth_a'],self.wise_view_parameters['synth_a_sub'], self.wise_view_parameters['synth_a_ra'],self.wise_view_parameters['synth_a_dec'], self.wise_view_parameters['synth_a_w1'],self.wise_view_parameters['synth_a_w2'], self.wise_view_parameters['synth_a_pmra'],self.wise_view_parameters['synth_a_pmdec'], self.wise_view_parameters['synth_a_mjd'],self.wise_view_parameters['synth_b'], self.wise_view_parameters['synth_b_sub'],self.wise_view_parameters['synth_b_ra'], self.wise_view_parameters['synth_b_dec'],self.wise_view_parameters['synth_b_w1'], self.wise_view_parameters['synth_b_w2'],self.wise_view_parameters['synth_b_pmra'],self.wise_view_parameters['synth_b_pmdec'], self.wise_view_parameters['synth_b_mjd'])
+
+        # FOV in arcseconds
+        fov = self.PixelSizeToFOV(self.wise_view_parameters['size'])
+
+        # Duration of frames in ms
+        speed = 150
+
+        # Linear scaling factor
+        linear = 1
+
+        # Zoom factor
+        zoom = 9
+
+        # Display border on first frame
+        border = 0
+
+        # Gaia overlay
+        gaia = 1
+
+        return wise_view_template_url.format(self.wise_view_parameters['ra'], self.wise_view_parameters['dec'],fov,self.wise_view_parameters['band'], speed, self.wise_view_parameters['minbright'],self.wise_view_parameters['maxbright'], self.wise_view_parameters['window'],self.wise_view_parameters['diff_window'], linear, "", zoom, border, gaia,self.wise_view_parameters['invert'], self.wise_view_parameters['max_dyr'],self.wise_view_parameters['scandir'], self.wise_view_parameters['neowise'],self.wise_view_parameters['diff'], self.wise_view_parameters['outer'],self.wise_view_parameters['unique'], self.wise_view_parameters['smooth_scan'],self.wise_view_parameters['shift'], self.wise_view_parameters['pmx'],self.wise_view_parameters['pmy'], self.wise_view_parameters['synth_a'],self.wise_view_parameters['synth_a_sub'], self.wise_view_parameters['synth_a_ra'],self.wise_view_parameters['synth_a_dec'], self.wise_view_parameters['synth_a_w1'],self.wise_view_parameters['synth_a_w2'], self.wise_view_parameters['synth_a_pmra'],self.wise_view_parameters['synth_a_pmdec'], self.wise_view_parameters['synth_a_mjd'],self.wise_view_parameters['synth_b'], self.wise_view_parameters['synth_b_sub'],self.wise_view_parameters['synth_b_ra'], self.wise_view_parameters['synth_b_dec'],self.wise_view_parameters['synth_b_w1'], self.wise_view_parameters['synth_b_w2'],self.wise_view_parameters['synth_b_pmra'],self.wise_view_parameters['synth_b_pmdec'], self.wise_view_parameters['synth_b_mjd'])
 
     def __str__(self):
         return str(self.wise_view_parameters)
