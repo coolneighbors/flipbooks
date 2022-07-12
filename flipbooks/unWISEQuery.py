@@ -179,13 +179,14 @@ class unWISEQuery:
             lower_percentile = 100-upper_percentile
             min_bright = np.percentile(image_data, lower_percentile)
             max_bright = np.percentile(image_data, upper_percentile)
-            if(max_bright - min_bright < 100):
+            brightness_width = 100
+            if(max_bright - min_bright < brightness_width):
                 brightness_difference = max_bright - min_bright
-                brightness_difference = 100 - brightness_difference
+                brightness_difference = brightness_width - brightness_difference
                 max_bright = max_bright + brightness_difference/2
                 min_bright = min_bright - brightness_difference/2
 
-            brightness_clip = [min_bright, min(max_bright,300)]
+            brightness_clip = [min_bright, max_bright]
         else:
             raise TypeError("The mode must be either 'full' or 'percentile'.")
 
