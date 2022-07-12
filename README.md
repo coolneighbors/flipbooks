@@ -22,7 +22,7 @@ Upon initialization of flipbooks, a local environment variable of PATH_TO_FLIPBO
 
 As of version 1.2, flipbooks requires the following packages: 
 ```
-requests, PILLOW, imageio
+requests, PILLOW, imageio, matplotlib
 ```
 ___
 

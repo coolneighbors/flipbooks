@@ -8,7 +8,7 @@ setup(
     # Needed to actually package something
     packages=['flipbooks'],
     # Needed for dependencies
-    install_requires=['requests','PILLOW','imageio'],
+    install_requires=['requests','PILLOW','imageio','matplotlib'],
     # *strongly* suggested for sharing
     version='1.2',
     # The license can be anything you like
