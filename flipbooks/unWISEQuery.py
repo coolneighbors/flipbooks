@@ -121,6 +121,26 @@ class unWISEQuery:
             print(f"unWISE Provided an Incomplete FITS Response. Retrying in {delay} seconds...")
             filenames = self.request_unWISE_FITS(delay=delay)
             print('Success')
+        except ConnectionError:
+            delay *= 2
+            if delay == 0:
+                delay = 5
+            elif delay >= 300:
+                delay = 300
+            print(f"unWISE Connection was Unsuccessful. Retrying in {delay} seconds...")
+            filenames = self.request_unWISE_FITS(delay=delay)
+            print('Success')
+        except ConnectionResetError:
+            delay *= 2
+            if delay == 0:
+                delay = 5
+            elif delay >= 300:
+                delay = 300
+            print(f"unWISE Connection was Reset. Retrying in {delay} seconds...")
+            filenames = self.request_unWISE_FITS(delay=delay)
+            print('Success')
+        except ConnectionRefusedError:
+            raise ConnectionRefusedError(f"unWISE Connection was Refused.")
 
         return filenames
 
