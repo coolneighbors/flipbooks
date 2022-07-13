@@ -186,6 +186,9 @@ class unWISEQuery:
                 max_bright = max_bright + brightness_difference/2
                 min_bright = min_bright - brightness_difference/2
 
+            if (max_bright > 300):
+                max_bright = 50
+                min_bright = -50
             brightness_clip = [min_bright, max_bright]
         else:
             raise TypeError("The mode must be either 'full' or 'percentile'.")
