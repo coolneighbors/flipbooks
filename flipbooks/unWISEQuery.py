@@ -221,7 +221,7 @@ class unWISEQuery:
 
             default_min_bright = -50
             default_max_bright = 50
-            self.showBrightnessHistogram(self.w1_image_data)
+
             if(min_bright == max_bright):
                 current_version = copy(self.unWISE_parameters["version"])
                 if ("neo" in current_version):
