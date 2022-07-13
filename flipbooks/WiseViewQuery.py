@@ -11,8 +11,9 @@ import requests
 import multiprocessing as mp
 from PIL import Image
 from flipbooks import postProcessing
+from astropy.utils.data import download_file
 
-unWISE_pixel_ratio = 2.75
+unWISE_pixel_scale = 2.75
 
 class WiseViewQuery:
 
@@ -92,7 +93,7 @@ class WiseViewQuery:
         Parameters
         ----------
             kwargs : keyword arguments
-                Keyword arguments which are in default_parameters, otherwise it will raise an error. Even if the keyword
+                Keyword arguments which are keys located in the dict of default parameters, otherwise it will raise an error. Even if the keyword
                 argument is given in uppercase, it will still work.
 
         Returns
@@ -257,7 +258,7 @@ class WiseViewQuery:
     def getPNGDataFromURL(cls, url, delay=0):
         time.sleep(delay)
         try:
-            PNG_data = requests.get(url)
+            PNG_data = requests.get(url).content
         except ConnectionResetError:
             delay *= 2
             if delay == 0:
@@ -265,9 +266,25 @@ class WiseViewQuery:
             elif delay >= 300:
                 delay = 300
             print(f"AWS Request Reset Error (png download), Retrying in {delay} seconds...")
-            PNG_data  = WiseViewQuery.getPNGDataFromURL(url, delay=delay)
+            PNG_data = WiseViewQuery.getPNGDataFromURL(url, delay=delay).content
             print('Success')
         return PNG_data
+
+    @classmethod
+    def getFITSDataFromURL(cls, url, delay=0):
+        time.sleep(delay)
+        try:
+            FITS_data = requests.get(url).content
+        except ConnectionResetError:
+            delay *= 2
+            if delay == 0:
+                delay = 5
+            elif delay >= 300:
+                delay = 300
+            print(f"AWS Request Reset Error (fits download), Retrying in {delay} seconds...")
+            FITS_data = WiseViewQuery.getFITSDataFromURL(url, delay=delay).content
+            print('Success')
+        return FITS_data
 
     @classmethod
     def downloadPNG(cls, url, outdir, fieldName):
@@ -297,9 +314,43 @@ class WiseViewQuery:
         fname = os.path.basename(fieldName)
         fname_dest = os.path.join(outdir, fname)
 
-        r = WiseViewQuery.getPNGDataFromURL(url)
+        r_content = WiseViewQuery.getPNGDataFromURL(url)
 
-        open(fname_dest, 'wb').write(r.content)
+        open(fname_dest, 'wb').write(r_content)
+
+        return fname_dest
+
+    @classmethod
+    def downloadFITS(cls, url, outdir, fieldName):
+        """
+        Download one FITS file based on its URL.
+
+        Parameters
+        ----------
+            url : str
+                Download URL.
+            outdir : str
+                Output directory.
+            fieldName : str
+                Name to be given to the file
+
+        Returns
+        -------
+            fname_dest : str
+                Destination file name to which the FITS file was downloaded.
+
+        Notes
+        -----
+            'url' here should be just a string, not an array or list of strings.
+
+        """
+
+        fname = os.path.basename(fieldName)
+        fname_dest = os.path.join(outdir, fname)
+
+        r_content = WiseViewQuery.getFITSDataFromURL(url)
+
+        open(fname_dest, 'wb').write(r_content)
 
         return fname_dest
 
@@ -400,12 +451,12 @@ class WiseViewQuery:
         # Rescales PNGs
         if (scale_factor != 1.0):
             for f in flist:
-                im = Image.open(f)
-                size = im.size
-                width = size[0]
-                height = size[1]
-                rescaled_size = (width * scale_factor, height * scale_factor)
-                postProcessing.resize_png(f, rescaled_size)
+                with Image.open(f) as im:
+                    size = im.size
+                    width = size[0]
+                    height = size[1]
+                    rescaled_size = (width * scale_factor, height * scale_factor)
+                    postProcessing.resize_png(f, rescaled_size)
 
         images = []
         for f in flist:
@@ -485,11 +536,11 @@ class WiseViewQuery:
             Since WiseView uses the unWISE Catalog, it has a pixel ratio of ~2.75 arcseconds per pixel.
             Notice, since pixel size must be an integer, this conversion can not be exact for all FOVs.
             In general, for some pixel_size, it can correspond to an FOV of FOV±2.75 arcseconds (depending on how you
-            round to an integer). Since the int casting truncates the value of FOV / unwise_pixel_ratio, this means our
+            round to an integer). Since the int casting truncates the value of FOV / unWISE_pixel_scale, this means our
             pixel_size can correspond to an FOV between FOV-2.75 arcseconds and FOV arcseconds.
         """
 
-        pixel_size = int(FOV / unWISE_pixel_ratio)
+        pixel_size = int(FOV / unWISE_pixel_scale)
         return pixel_size
 
     @classmethod
@@ -512,7 +563,7 @@ class WiseViewQuery:
             Since WiseView uses the unWISE Catalog, it has a pixel ratio of ~2.75 arcseconds per pixel.
         """
 
-        FOV = unWISE_pixel_ratio * pixel_size
+        FOV = unWISE_pixel_scale * pixel_size
         return FOV
 
     def generateWiseViewURL(self):
@@ -537,6 +588,34 @@ class WiseViewQuery:
         gaia = 1
 
         return wise_view_template_url.format(self.wise_view_parameters['ra'], self.wise_view_parameters['dec'],fov,self.wise_view_parameters['band'], speed, self.wise_view_parameters['minbright'],self.wise_view_parameters['maxbright'], self.wise_view_parameters['window'],self.wise_view_parameters['diff_window'], linear, "", zoom, border, gaia,self.wise_view_parameters['invert'], self.wise_view_parameters['max_dyr'],self.wise_view_parameters['scandir'], self.wise_view_parameters['neowise'],self.wise_view_parameters['diff'], self.wise_view_parameters['outer'],self.wise_view_parameters['unique'], self.wise_view_parameters['smooth_scan'],self.wise_view_parameters['shift'], self.wise_view_parameters['pmx'],self.wise_view_parameters['pmy'], self.wise_view_parameters['synth_a'],self.wise_view_parameters['synth_a_sub'], self.wise_view_parameters['synth_a_ra'],self.wise_view_parameters['synth_a_dec'], self.wise_view_parameters['synth_a_w1'],self.wise_view_parameters['synth_a_w2'], self.wise_view_parameters['synth_a_pmra'],self.wise_view_parameters['synth_a_pmdec'], self.wise_view_parameters['synth_a_mjd'],self.wise_view_parameters['synth_b'], self.wise_view_parameters['synth_b_sub'],self.wise_view_parameters['synth_b_ra'], self.wise_view_parameters['synth_b_dec'],self.wise_view_parameters['synth_b_w1'], self.wise_view_parameters['synth_b_w2'],self.wise_view_parameters['synth_b_pmra'],self.wise_view_parameters['synth_b_pmdec'], self.wise_view_parameters['synth_b_mjd'])
+
+    def generateWiseViewFITSURL(self, band='W1'):
+        if(band == 'W1'):
+            bands = '1'
+        elif(band == 'W2'):
+            bands = '2'
+        wise_view_FITS_template_url = "http://byw.tools/cutout?ra={}&dec={}&size={}&band={}&epoch=0"
+
+        return wise_view_FITS_template_url.format(self.wise_view_parameters['ra'], self.wise_view_parameters['dec'],self.wise_view_parameters['size'],bands)
+
+    def requestWiseViewFITS(self):
+        bands = ['W1','W2']
+        outdir = "fits"
+        if (not os.path.exists(outdir)):
+            os.mkdir(outdir)
+        FITS_filenames = []
+        for band in bands:
+            wise_view_FITS_url = self.generateWiseViewFITSURL(band)
+            print(f'Requesting {band} FITS from WiseView...')
+            if(band == 'W1'):
+                W1_fieldName = 'W1-field-RA' + str(self.wise_view_parameters["ra"]) + '-DEC' + str(self.wise_view_parameters["dec"]) + '-' + "-epoch0" + '.fits'
+                FITS_filenames.append(self.downloadFITS(wise_view_FITS_url, outdir, fieldName=W1_fieldName))
+            elif(band == 'W2'):
+                W2_fieldName = 'W2-field-RA' + str(self.wise_view_parameters["ra"]) + '-DEC' + str(self.wise_view_parameters["dec"]) + '-' + "-epoch0" + '.fits'
+                FITS_filenames.append(self.downloadFITS(wise_view_FITS_url, outdir, fieldName=W2_fieldName))
+
+        return FITS_filenames
+
 
     def __str__(self):
         return str(self.wise_view_parameters)
