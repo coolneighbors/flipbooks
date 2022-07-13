@@ -1,4 +1,5 @@
 import os
+import time
 from copy import copy
 
 import astropy.io.fits as fits
@@ -99,24 +100,27 @@ class unWISEQuery:
 
         return unWISE_query_url
 
-    def request_unWISE_FITS(self):
+    def request_unWISE_FITS(self, delay=0):
         unWISE_query_url = self.generateRequestURL()
-        unWISE_response = requests.get(unWISE_query_url)
-        download_successful = False
-        while (not download_successful):
+        filenames = []
+        time.sleep(delay)
+        try:
             unWISE_response = requests.get(unWISE_query_url)
-
             with open("unWISE_zipped_folder.tar.gz", 'wb') as f:
                 f.write(unWISE_response.content)
-            filenames = []
-            try:
-                with tarfile.open("unWISE_zipped_folder.tar.gz", "r:gz") as tar:
-                    filenames = tar.getnames()
-                    tar.extractall()
-                    download_successful = True
-            except tarfile.ReadError:
-                print("Invalid Tar file. Trying again...")
+            with tarfile.open("unWISE_zipped_folder.tar.gz", "r:gz") as tar:
+                filenames = tar.getnames()
+                tar.extractall()
             os.remove("unWISE_zipped_folder.tar.gz")
+        except tarfile.ReadError:
+            delay *= 2
+            if delay == 0:
+                delay = 5
+            elif delay >= 300:
+                delay = 300
+            print(f"unWISE Provided an Incomplete FITS Response. Retrying in {delay} seconds...")
+            filenames = self.request_unWISE_FITS(delay=delay)
+            print('Success')
 
         return filenames
 
