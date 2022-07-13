@@ -180,15 +180,27 @@ class unWISEQuery:
             min_bright = np.percentile(image_data, lower_percentile)
             max_bright = np.percentile(image_data, upper_percentile)
             brightness_width = 100
+
             if(max_bright - min_bright < brightness_width):
                 brightness_difference = max_bright - min_bright
                 brightness_difference = brightness_width - brightness_difference
                 max_bright = max_bright + brightness_difference/2
                 min_bright = min_bright - brightness_difference/2
 
+            default_min_bright = -50
+            default_max_bright = 50
+
+            if(min_bright == max_bright):
+                min_bright = default_min_bright
+                max_bright = default_max_bright
+
             if (max_bright > 300):
-                max_bright = 50
-                min_bright = -50
+                min_bright = default_min_bright
+                max_bright = default_max_bright
+
+            if(max_bright < min_bright):
+                raise ValueError("The maximum brightness is less than the minimum brightness.")
+
             brightness_clip = [min_bright, max_bright]
         else:
             raise TypeError("The mode must be either 'full' or 'percentile'.")
@@ -349,8 +361,8 @@ class unWISEQuery:
 
 if (__name__ == "__main__"):
     version = "neo1"
-    ra = 53.45558333
-    dec = -58.93852778
+    ra = 20.20018713
+    dec = 52.11258904
     size = unWISEQuery.FOVToPixelSize(120)
     bands = 12
 
@@ -368,4 +380,5 @@ if (__name__ == "__main__"):
     print(brightness_clip)
     unWISE_Query.displayWiseViewImage(brightness_clip=brightness_clip)
     wise_view_query = WiseViewQuery.WiseViewQuery(ra=ra, dec=dec, size=size, band=band, minbright=brightness_clip[0], maxbright=brightness_clip[1])
+    wise_view_query.generateSyntheticObject(synth_a_w2=16,synth_a_pmra=1000,synth_a_pmdec=1000)
     print(wise_view_query.generateWiseViewURL())
