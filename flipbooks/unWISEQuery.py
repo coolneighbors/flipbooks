@@ -102,13 +102,21 @@ class unWISEQuery:
     def request_unWISE_FITS(self):
         unWISE_query_url = self.generateRequestURL()
         unWISE_response = requests.get(unWISE_query_url)
-        with open("unWISE_zipped_folder.tar.gz", 'wb') as f:
-            f.write(unWISE_response.content)
-        filenames = []
-        with tarfile.open("unWISE_zipped_folder.tar.gz", "r:gz") as tar:
-            filenames = tar.getnames()
-            tar.extractall()
-        os.remove("unWISE_zipped_folder.tar.gz")
+        download_successful = False
+        while (not download_successful):
+            unWISE_response = requests.get(unWISE_query_url)
+
+            with open("unWISE_zipped_folder.tar.gz", 'wb') as f:
+                f.write(unWISE_response.content)
+            filenames = []
+            try:
+                with tarfile.open("unWISE_zipped_folder.tar.gz", "r:gz") as tar:
+                    filenames = tar.getnames()
+                    tar.extractall()
+                    download_successful = True
+            except tarfile.ReadError:
+                print("Invalid Tar file. Trying again...")
+            os.remove("unWISE_zipped_folder.tar.gz")
 
         return filenames
 
