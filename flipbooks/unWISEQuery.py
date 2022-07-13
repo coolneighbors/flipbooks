@@ -221,10 +221,26 @@ class unWISEQuery:
 
             default_min_bright = -50
             default_max_bright = 50
-
+            self.showBrightnessHistogram(self.w1_image_data)
             if(min_bright == max_bright):
-                min_bright = default_min_bright
-                max_bright = default_max_bright
+                current_version = copy(self.unWISE_parameters["version"])
+                try:
+                    if("neo" in current_version):
+                        neo_version_number = int(current_version.split("neo")[1])
+                        if(neo_version_number == 7):
+                            min_bright = default_min_bright
+                            max_bright = default_max_bright
+                        else:
+                            print(f"The current version of the unWISE data has a blank frame. Incrementing from {current_version} to neo{neo_version_number+1}.")
+                            self.unWISE_parameters["version"] = f"neo{neo_version_number+1}"
+                            self.filenames = self.request_unWISE_FITS()
+                            self.w1_image_data, self.w2_image_data = self.getImageData(self.filenames)
+                            brightness_clip = self.calculateBrightnessClip(mode="percentile", percentile=percentile)
+                            min_bright = brightness_clip[0]
+                            max_bright = brightness_clip[1]
+                except IndexError:
+                    min_bright = default_min_bright
+                    max_bright = default_max_bright
 
             if (max_bright > 300):
                 min_bright = default_min_bright
@@ -392,9 +408,9 @@ class unWISEQuery:
         return FOV
 
 if (__name__ == "__main__"):
-    version = "neo1"
-    ra = 20.20018713
-    dec = 52.11258904
+    version = "neo4"
+    ra = 243.9804845454199
+    dec = 79.0040665827614
     size = unWISEQuery.FOVToPixelSize(120)
     bands = 12
 
@@ -405,12 +421,12 @@ if (__name__ == "__main__"):
     else:
         band = 3
 
-    unWISE_Query = unWISEQuery(ra=ra, dec=dec, size=size, bands=bands)
+    unWISE_Query = unWISEQuery(version=version, ra=ra, dec=dec, size=size, bands=bands)
 
     percentile = 97.5
     brightness_clip = unWISE_Query.calculateBrightnessClip("percentile", percentile=percentile)
     print(brightness_clip)
     unWISE_Query.displayWiseViewImage(brightness_clip=brightness_clip)
     wise_view_query = WiseViewQuery.WiseViewQuery(ra=ra, dec=dec, size=size, band=band, minbright=brightness_clip[0], maxbright=brightness_clip[1])
-    wise_view_query.generateSyntheticObject(synth_a_w2=16,synth_a_pmra=1000,synth_a_pmdec=1000)
+    #wise_view_query.generateSyntheticObject(synth_a_w2=16,synth_a_pmra=1000,synth_a_pmdec=1000)
     print(wise_view_query.generateWiseViewURL())
