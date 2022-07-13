@@ -224,21 +224,21 @@ class unWISEQuery:
             self.showBrightnessHistogram(self.w1_image_data)
             if(min_bright == max_bright):
                 current_version = copy(self.unWISE_parameters["version"])
-                try:
-                    if("neo" in current_version):
-                        neo_version_number = int(current_version.split("neo")[1])
-                        if(neo_version_number == 7):
-                            min_bright = default_min_bright
-                            max_bright = default_max_bright
-                        else:
-                            print(f"The current version of the unWISE data has a blank frame. Incrementing from {current_version} to neo{neo_version_number+1}.")
-                            self.unWISE_parameters["version"] = f"neo{neo_version_number+1}"
-                            self.filenames = self.request_unWISE_FITS()
-                            self.w1_image_data, self.w2_image_data = self.getImageData(self.filenames)
-                            brightness_clip = self.calculateBrightnessClip(mode="percentile", percentile=percentile)
-                            min_bright = brightness_clip[0]
-                            max_bright = brightness_clip[1]
-                except IndexError:
+                if ("neo" in current_version):
+                    neo_version_number = int(current_version.split("neo")[1])
+                    if (neo_version_number == 7):
+                        min_bright = default_min_bright
+                        max_bright = default_max_bright
+                    else:
+                        print(
+                            f"The current version of the unWISE data has a blank frame. Incrementing from {current_version} to neo{neo_version_number + 1}.")
+                        self.unWISE_parameters["version"] = f"neo{neo_version_number + 1}"
+                        self.filenames = self.request_unWISE_FITS()
+                        self.w1_image_data, self.w2_image_data = self.getImageData(self.filenames)
+                        brightness_clip = self.calculateBrightnessClip(mode="percentile", percentile=percentile)
+                        min_bright = brightness_clip[0]
+                        max_bright = brightness_clip[1]
+                else:
                     min_bright = default_min_bright
                     max_bright = default_max_bright
 
