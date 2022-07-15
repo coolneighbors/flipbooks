@@ -11,7 +11,6 @@ import requests
 import multiprocessing as mp
 from PIL import Image
 from flipbooks import postProcessing
-from astropy.utils.data import download_file
 
 unWISE_pixel_scale = 2.75
 
