@@ -104,14 +104,24 @@ class unWISEQuery:
         unWISE_query_url = self.generateRequestURL()
         filenames = []
         time.sleep(delay)
+        id = hash((self.unWISE_parameters["version"], self.unWISE_parameters["ra"], self.unWISE_parameters["dec"], self.unWISE_parameters["size"], self.unWISE_parameters["bands"]))
         try:
             unWISE_response = requests.get(unWISE_query_url)
-            with open("unWISE_zipped_folder.tar.gz", 'wb') as f:
+            with open(f"unWISE_zipped_folder_{id}.tar.gz", 'wb') as f:
                 f.write(unWISE_response.content)
-            with tarfile.open("unWISE_zipped_folder.tar.gz", "r:gz") as tar:
+            with tarfile.open(f"unWISE_zipped_folder_{id}.tar.gz", "r:gz") as tar:
+                # change the filenames to include the id in the tar file
+                for member in tar.getmembers():
+                    split_name =  member.name.split(".")
+                    name_without_extension = split_name[0]
+                    extension = split_name[1]
+                    new_name = f"{name_without_extension}_{id}.{extension}"
+                    member.name = new_name
+
                 filenames = tar.getnames()
                 tar.extractall()
-            os.remove("unWISE_zipped_folder.tar.gz")
+
+            os.remove(f"unWISE_zipped_folder_{id}.tar.gz")
         except tarfile.ReadError:
             delay *= 2
             if delay == 0:
@@ -242,9 +252,10 @@ class unWISEQuery:
                     min_bright = default_min_bright
                     max_bright = default_max_bright
 
-            if (max_bright > 300):
-                min_bright = default_min_bright
-                max_bright = default_max_bright
+            # Not sure if this helps or not
+            #if (max_bright > 300):
+            #    min_bright = default_min_bright
+            #    max_bright = default_max_bright
 
             if(max_bright < min_bright):
                 raise ValueError("The maximum brightness is less than the minimum brightness.")
