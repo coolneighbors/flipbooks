@@ -10,7 +10,7 @@ setup(
     # Needed for dependencies
     install_requires=['requests','PILLOW','imageio','matplotlib'],
     # *strongly* suggested for sharing
-    version='1.2',
+    version='1.3',
     # The license can be anything you like
     license='MIT',
     description='A pipeline for downloading and modifying Cool Neighbors flipbook images.',
