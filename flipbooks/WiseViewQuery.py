@@ -235,7 +235,6 @@ class WiseViewQuery:
 
         valid_keys = ['ims', 'min', 'max', 'all_mjds', 'mjds', 'epochs', 'scandirs', 'CRPIX1', 'CRPIX2', 'CRVAL1','CRVAL2', 'NAXIS1', 'NAXIS2']
         requested_response_values = []
-
         for key in args:
             if (key in valid_keys):
                 try:
@@ -245,7 +244,7 @@ class WiseViewQuery:
                     time.sleep(1)
                     self.getJSONResponse()
                     print('Success')
-                    return self.requestMetadata(args)
+                    return self.requestMetadata(*args)
             else:
                 raise KeyError(f"The following key is not a valid parameter: {key}. The available parameters are: {valid_keys}.")
         if(len(args) == 1):
