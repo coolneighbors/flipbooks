@@ -362,7 +362,8 @@ class WiseViewQuery:
     def earlyTerminationProtocol(cls, flist):
         print("Early termination protocol initiated. Deleting unfinished files.")
         for f in flist:
-            os.remove(f)
+            if (os.path.exists(f)):
+                os.remove(f)
 
     @classmethod
     def downloadPNGs(cls, urls, ra, dec, outdir):
@@ -371,6 +372,12 @@ class WiseViewQuery:
             processes = [pool.apply_async(WiseViewQuery.downloadData, args=(urls[i], i, ra, dec, outdir)) for i in range(len(urls))]
             flist = [p.get() for p in processes]
         except Exception as e:
+            flist = []
+            for i in range(len(urls)):
+                fieldName = 'field-RA' + str(ra) + '-DEC' + str(dec) + '-' + str(i) + '.png'
+                fname = os.path.basename(fieldName)
+                fname_dest = os.path.join(outdir, fname)
+                flist.append(fname_dest)
             cls.earlyTerminationProtocol(flist)
         return flist
 
