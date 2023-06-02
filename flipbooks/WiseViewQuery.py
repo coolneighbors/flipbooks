@@ -243,7 +243,7 @@ class WiseViewQuery:
                     print(f'Service Error (no {key} key, request_metadata), Trying Again')
                     time.sleep(1)
                     self.getJSONResponse()
-                    print('Success')
+                    print(f'Success: {self.JSONResponse}')
                     return self.requestMetadata(*args)
             else:
                 raise KeyError(f"The following key is not a valid parameter: {key}. The available parameters are: {valid_keys}.")
@@ -359,12 +359,19 @@ class WiseViewQuery:
         return fname_dest
 
     @classmethod
+    def earlyTerminationProtocol(cls, flist):
+        print("Early termination protocol initiated. Deleting unfinished files.")
+        for f in flist:
+            os.remove(f)
+
+    @classmethod
     def downloadPNGs(cls, urls, ra, dec, outdir):
-        pool = mp.Pool()
-
-        processes = [pool.apply_async(WiseViewQuery.downloadData, args=(urls[i], i, ra, dec, outdir)) for i in range(len(urls))]
-        flist = [p.get() for p in processes]
-
+        try:
+            pool = mp.Pool()
+            processes = [pool.apply_async(WiseViewQuery.downloadData, args=(urls[i], i, ra, dec, outdir)) for i in range(len(urls))]
+            flist = [p.get() for p in processes]
+        except Exception as e:
+            cls.earlyTerminationProtocol(flist)
         return flist
 
     def downloadWiseViewData(self, outdir, scale_factor=1.0, addGrid=False, gridCount=5, gridType = "Solid", gridColor = (0,0,0)):
