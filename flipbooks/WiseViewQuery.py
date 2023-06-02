@@ -241,7 +241,6 @@ class WiseViewQuery:
                     requested_response_values.append(self.JSONResponse[key])
                 except KeyError:
                     delay = 10
-                    #TODO: Investigate why a service error occurs when requesting metadata, but will work again after restarting whole process
                     print(f'Service Error (no {key} key, request_metadata), Trying Again in {delay} seconds...')
                     time.sleep(delay)
                     self.getJSONResponse()
