@@ -240,11 +240,25 @@ class WiseViewQuery:
                 try:
                     requested_response_values.append(self.JSONResponse[key])
                 except KeyError:
-                    print(f'Service Error (no {key} key, request_metadata), Trying Again')
-                    time.sleep(1)
+                    delay = 10
+                    #TODO: Investigate why a service error occurs when requesting metadata, but will work again after restarting whole process
+                    print(f'Service Error (no {key} key, request_metadata), Trying Again in {delay} seconds...')
+                    time.sleep(delay)
                     self.getJSONResponse()
-                    print(f'Success: {self.JSONResponse}')
-                    return self.requestMetadata(*args)
+                    try:
+                        if(self.JSONResponse["message"] == 'Service Unavailable'):
+                            temp_WVQ = WiseViewQuery()
+                            temp_WVQ.wise_view_parameters = self.wise_view_parameters
+                            temp_WVQ.getJSONResponse()
+                            try:
+                                if (temp_WVQ.JSONResponse["message"] == 'Service Unavailable'):
+                                    raise ConnectionError("WiseView API is currently unavailable. Please try again later.")
+                            except KeyError:
+                                print(f"Success: {temp_WVQ.JSONResponse}")
+                                return temp_WVQ.requestMetadata(*args)
+                    except KeyError:
+                        print(f"Success: {self.JSONResponse}")
+                        return self.requestMetadata(*args)
             else:
                 raise KeyError(f"The following key is not a valid parameter: {key}. The available parameters are: {valid_keys}.")
         if(len(args) == 1):
