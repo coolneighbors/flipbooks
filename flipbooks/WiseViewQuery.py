@@ -23,6 +23,14 @@ class WiseViewQuery:
         self.wise_view_parameters = self.customParams(**kwargs)
 
         self.JSONResponse = self.getJSONResponse()
+        try:
+            if(self.JSONResponse["message"] == 'Service Unavailable'):
+                print("WiseView Service Unavailable, Trying again...")
+                self.__init__(**kwargs)
+                print("Success: WiseView Service Available")
+        except KeyError:
+            pass
+
 
     def defaultParams(self):
         """
@@ -188,14 +196,25 @@ class WiseViewQuery:
                 delay = 5
             elif delay >= 300:
                 delay = 300
-            print(f"AWS Connection Reset Error (initial response), Retrying in {delay} seconds...")
+            print(f"AWS Connection Reset Error, Retrying in {delay} seconds...")
             response = self.getResponse(delay=delay)
-            print('Success')
-
+            print(f'Success: Response Received')
         return response
 
-    def getJSONResponse(self):
-        return self.getResponse().json()
+    def getJSONResponse(self, delay=0):
+        time.sleep(delay)
+        try:
+            json_response = self.getResponse().json()
+        except requests.exceptions.JSONDecodeError:
+            delay *= 2
+            if delay == 0:
+                delay = 5
+            elif delay >= 300:
+                delay = 300
+            print(f"Invalid JSON response sent from WiseView, Retrying in {delay} seconds...")
+            json_response = self.getJSONResponse(delay=delay)
+            print(f'Success: JSON Response Received')
+        return json_response
 
     def getURLs(self):
         """
@@ -239,25 +258,8 @@ class WiseViewQuery:
             if (key in valid_keys):
                 try:
                     requested_response_values.append(self.JSONResponse[key])
-                except KeyError:
-                    delay = 10
-                    print(f'Service Error (no {key} key, request_metadata), Trying Again in {delay} seconds...')
-                    time.sleep(delay)
-                    self.getJSONResponse()
-                    try:
-                        if(self.JSONResponse["message"] == 'Service Unavailable'):
-                            temp_WVQ = WiseViewQuery()
-                            temp_WVQ.wise_view_parameters = self.wise_view_parameters
-                            temp_WVQ.getJSONResponse()
-                            try:
-                                if (temp_WVQ.JSONResponse["message"] == 'Service Unavailable'):
-                                    raise ConnectionError("WiseView API is currently unavailable. Please try again later.")
-                            except KeyError:
-                                print(f"Success: {temp_WVQ.JSONResponse}")
-                                return temp_WVQ.requestMetadata(*args)
-                    except KeyError:
-                        print(f"Success: {self.JSONResponse}")
-                        return self.requestMetadata(*args)
+                except Exception as e:
+                    print(f"Error in WiseViewQuery.requestMetadata: {e}, this should be investigated.")
             else:
                 raise KeyError(f"The following key is not a valid parameter: {key}. The available parameters are: {valid_keys}.")
         if(len(args) == 1):
