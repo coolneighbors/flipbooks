@@ -4,11 +4,17 @@ Created on Thu Jun  9 15:15:09 2022
 
 Multiprocessing additions on Fri Jun 10 14:53:00 2022
 
-@author: Noah Schapera
+Save state modifcations on Thurs Jun 1 16:27:00 2023
+
+@author: Noah Schapera, Austin Humphreys
 """
 
 from PIL import Image, ImageDraw
 import multiprocessing as mp
+import os
+
+
+
 
 #rescales pngs
 def rescale(f,scale_factor):
@@ -110,10 +116,20 @@ def applyGrid(imname, grid_count = 12, grid_type = "Solid", color = (0,0,0)):
 
         image.save(imname)
 
+def earlyTerminationProtocol(flist):
+    print("Early termination protocol initiated. Deleting unfinished files.")
+    for f in flist:
+        os.remove(f)
 
 def applyPNGModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor):
-    pool = mp.Pool()
-    processes = [pool.apply_async(scalePNGsAndApplyGrid, args=(f, scale_factor, addGrid, gridCount, gridType, gridColor)) for f in flist]
+    try:
+        pool = mp.Pool()
+        processes = [pool.apply_async(scalePNGsAndApplyGrid, args=(f, scale_factor, addGrid, gridCount, gridType, gridColor)) for f in flist]
+        # Wait for processes to complete so that the files are saved before the next step
+        pool.close()
+        pool.join()
+    except Exception as e:
+        earlyTerminationProtocol(flist)
 
 
 def scalePNGsAndApplyGrid(f, scale_factor, addGrid, gridCount, gridType, gridColor):
