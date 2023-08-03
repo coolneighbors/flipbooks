@@ -190,6 +190,9 @@ class WiseViewQuery:
         time.sleep(delay)
         try:
             response = requests.get(self.png_anim, params=self.wise_view_parameters)
+            if (response.status_code != 200):
+                print(f"Response Status Code: {response.status_code}")
+                print(f"Response Text: {response.text}")
         except ConnectionResetError:
             delay *= 2
             if delay == 0:
