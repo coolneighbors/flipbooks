@@ -130,6 +130,7 @@ def applyPNGModifications(flist, scale_factor, addGrid, gridCount, gridType, gri
         pool.close()
         pool.join()
     except Exception as e:
+        print("Exception of type " + str(type(e)) + " occurred in applyPNGModifications: " + str(e))
         earlyTerminationProtocol(flist)
 
 

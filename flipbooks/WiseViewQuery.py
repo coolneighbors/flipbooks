@@ -390,6 +390,7 @@ class WiseViewQuery:
             processes = [pool.apply_async(WiseViewQuery.downloadData, args=(urls[i], i, ra, dec, outdir)) for i in range(len(urls))]
             flist = [p.get() for p in processes]
         except Exception as e:
+            print("Exception of type " + str(type(e)) + " occurred in downloadPNGs: " + str(e))
             flist = []
             for i in range(len(urls)):
                 fieldName = 'field-RA' + str(ra) + '-DEC' + str(dec) + '-' + str(i) + '.png'
