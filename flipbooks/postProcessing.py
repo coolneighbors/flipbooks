@@ -119,7 +119,8 @@ def applyGrid(imname, grid_count = 12, grid_type = "Solid", color = (0,0,0)):
 def earlyTerminationProtocol(flist):
     print("Early termination protocol initiated. Deleting unfinished files.")
     for f in flist:
-        os.remove(f)
+        if (os.path.exists(f)):
+            os.remove(f)
 
 def applyPNGModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor):
     try:
