@@ -17,24 +17,24 @@ import os
 
 
 #rescales pngs
-def rescale(f,scale_factor):
-    with Image.open(f) as im:
+def rescale(file_path, scale_factor):
+    with Image.open(file_path) as im:
         size = im.size
         width = size[0]
         height = size[1]
         rescaled_size = (width * scale_factor, height * scale_factor)
-        resize_png(f, rescaled_size)
+        resizeImage(file_path, rescaled_size)
 
 
-def resize_png(filename,size):
+def resizeImage(file_path, size):
     """
        Overwrite PNG file with a particular width and height
 
        Parameters
        ----------
-           filename : string
+           file_path : string
                Full path filename with filetype of the desired PNG file.
-           size : tuple, (int,int)
+           size : tuple, (int, int)
                Width and height of the new PNG
 
        Notes
@@ -46,20 +46,20 @@ def resize_png(filename,size):
 
         Could possibly implement a keep_aspect_ratio parameter, but our images should all be squares.
     """
-    with Image.open(filename) as im:
-        resized_image = im.resize(size,Image.Resampling.NEAREST)
-        resized_image.save(filename)
-    return filename
+    with Image.open(file_path) as im:
+        resized_image = im.resize(size, Image.Resampling.NEAREST)
+        resized_image.save(file_path)
+    return file_path
 
-def applyGrid(imname, grid_count = 12, grid_type = "Solid", color = (0,0,0)):
+def applyGrid(file_path, grid_count = 12, grid_type = "Solid", color = (0,0,0)):
     """
 
-    Post processing "shader" that adds a grid to an image.
+    Post-processing shader that adds a grid to an image.
 
 
     Parameters
     ----------
-    imname : TYPE
+    file_path : str
         image filename.
     grid_count : TYPE, optional
         The number of grid boxes to generate along each axis.
@@ -70,7 +70,7 @@ def applyGrid(imname, grid_count = 12, grid_type = "Solid", color = (0,0,0)):
 
     """
 
-    with Image.open(imname) as image:
+    with Image.open(file_path) as image:
         draw = ImageDraw.Draw(image)
         grid_side_length = int((image.width - (grid_count + 1)) / (grid_count))
         step_size = grid_side_length + 1
@@ -114,7 +114,7 @@ def applyGrid(imname, grid_count = 12, grid_type = "Solid", color = (0,0,0)):
 
         del draw
 
-        image.save(imname)
+        image.save(file_path)
 
 def earlyTerminationProtocol(flist):
     print("Early termination protocol initiated. Deleting unfinished files.")
@@ -122,7 +122,7 @@ def earlyTerminationProtocol(flist):
         if (os.path.exists(f)):
             os.remove(f)
 
-def applyPNGModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor):
+def applyModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor):
     try:
         pool = mp.Pool()
         processes = [pool.apply_async(scalePNGsAndApplyGrid, args=(f, scale_factor, addGrid, gridCount, gridType, gridColor)) for f in flist]

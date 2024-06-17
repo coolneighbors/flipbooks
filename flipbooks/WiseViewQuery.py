@@ -10,7 +10,7 @@ import time
 import requests
 import multiprocessing as mp
 from PIL import Image
-from flipbooks import postProcessing
+from flipbooks import PostProcessing
 
 unWISE_pixel_scale = 2.75
 
@@ -18,6 +18,7 @@ class WiseViewQuery:
 
     png_anim = "https://vjxontvb73.execute-api.us-west-2.amazonaws.com/png-animation"
     amnh_base_url = "https://amnh-citsci-public.s3-us-west-2.amazonaws.com/"
+    field_name_format = 'field-RA_{ra}-DEC_{dec}-DIFF_{diff}-INDEX_{index}.png'
 
     def __init__(self, **kwargs):
         self.wise_view_parameters = self.customParams(**kwargs)
@@ -31,8 +32,8 @@ class WiseViewQuery:
         except KeyError:
             pass
 
-
-    def defaultParams(self):
+    @staticmethod
+    def defaultParams():
         """
         Get a default dictionary of WiseView API parameters.
 
@@ -241,7 +242,6 @@ class WiseViewQuery:
 
         return urls
 
-
     def requestMetadata(self, *args):
         """
         Get requested metadata relating to the image blinks generated from self.wise_view_parameters
@@ -269,6 +269,25 @@ class WiseViewQuery:
             return requested_response_values[0]
         else:
             return tuple(requested_response_values)
+
+    def getFilledFieldName(self, index):
+        """
+        Get the filled field name based on the index.
+
+        Parameters
+        ----------
+            index : int
+                Index of the field name.
+
+        Returns
+        -------
+            field_name : str
+                Filled field name based on the index.
+
+        """
+
+        field_name = self.field_name_format.format(**self.wise_view_parameters, index=index)
+        return field_name
 
     @classmethod
     def getPNGDataFromURL(cls, url, delay=0):
@@ -303,7 +322,7 @@ class WiseViewQuery:
         return FITS_data
 
     @classmethod
-    def downloadPNG(cls, url, outdir, fieldName):
+    def downloadPNG(cls, url, outdir, field_name):
         """
         Download one PNG image based on its URL.
 
@@ -313,7 +332,7 @@ class WiseViewQuery:
                 Download URL.
             outdir : str
                 Output directory.
-            fieldName : str
+            field_name : str
                 Name to be given to the file
 
         Returns
@@ -327,7 +346,7 @@ class WiseViewQuery:
 
         """
 
-        fname = os.path.basename(fieldName)
+        fname = os.path.basename(field_name)
         fname_dest = os.path.join(outdir, fname)
 
         r_content = WiseViewQuery.getPNGDataFromURL(url)
@@ -337,7 +356,7 @@ class WiseViewQuery:
         return fname_dest
 
     @classmethod
-    def downloadFITS(cls, url, outdir, fieldName):
+    def downloadFITS(cls, url, outdir, field_name):
         """
         Download one FITS file based on its URL.
 
@@ -347,7 +366,7 @@ class WiseViewQuery:
                 Download URL.
             outdir : str
                 Output directory.
-            fieldName : str
+            field_name : str
                 Name to be given to the file
 
         Returns
@@ -361,7 +380,7 @@ class WiseViewQuery:
 
         """
 
-        fname = os.path.basename(fieldName)
+        fname = os.path.basename(field_name)
         fname_dest = os.path.join(outdir, fname)
 
         r_content = WiseViewQuery.getFITSDataFromURL(url)
@@ -370,10 +389,9 @@ class WiseViewQuery:
 
         return fname_dest
 
-    @classmethod
-    def downloadData(cls, url, i, ra, dec, outdir):
-        fieldName = 'field-RA' + str(ra) + '-DEC' + str(dec) + '-' + str(i) + '.png'
-        fname_dest = WiseViewQuery.downloadPNG(url, outdir, fieldName)
+    def downloadData(self, url, i, output_directory):
+        field_name = self.getFilledFieldName(i)
+        fname_dest = WiseViewQuery.downloadPNG(url, output_directory, field_name)
         return fname_dest
 
     @classmethod
@@ -383,30 +401,29 @@ class WiseViewQuery:
             if (os.path.exists(f)):
                 os.remove(f)
 
-    @classmethod
-    def downloadPNGs(cls, urls, ra, dec, outdir):
+    def downloadPNGs(self, urls, output_directory):
         try:
             pool = mp.Pool()
-            processes = [pool.apply_async(WiseViewQuery.downloadData, args=(urls[i], i, ra, dec, outdir)) for i in range(len(urls))]
+            processes = [pool.apply_async(self.downloadData, args=(urls[i], i, output_directory)) for i in range(len(urls))]
             flist = [p.get() for p in processes]
         except Exception as e:
             print("Exception of type " + str(type(e)) + " occurred in downloadPNGs: " + str(e))
             flist = []
             for i in range(len(urls)):
-                fieldName = 'field-RA' + str(ra) + '-DEC' + str(dec) + '-' + str(i) + '.png'
-                fname = os.path.basename(fieldName)
-                fname_dest = os.path.join(outdir, fname)
+                field_name = self.getFilledFieldName(i)
+                fname = os.path.basename(field_name)
+                fname_dest = os.path.join(output_directory, fname)
                 flist.append(fname_dest)
-            cls.earlyTerminationProtocol(flist)
+            self.earlyTerminationProtocol(flist)
         return flist
 
-    def downloadWiseViewData(self, outdir, scale_factor=1.0, addGrid=False, gridCount=5, gridType = "Solid", gridColor = (0,0,0)):
+    def downloadWiseViewData(self, output_directory, scale_factor=1.0, addGrid=False, gridCount=5, gridType = "Solid", gridColor = (0,0,0)):
         """
         Generates a set of PNG files for the available set of data from WiseView (which is from the unWISE data)
 
         Parameters
         ----------
-            outdir : str
+            output_directory : str
                 Output directory of the PNG files
             scale_factor : float, optional
                 PNG image size scaling factor, use integer values to avoid pixel-value interpolation.
@@ -428,31 +445,28 @@ class WiseViewQuery:
 
         Notes
         -----
-            Has the functionality that if outdir doesn't currently exist, it will create it instead of previously where
+            Has the functionality that if output_directory doesn't currently exist, it will create it instead of previously where
             we just asserted that it existed.
         """
 
-        if (not os.path.exists(outdir)):
-            os.mkdir(outdir)
+        if (not os.path.exists(output_directory)):
+            os.mkdir(output_directory)
 
         urls = self.getURLs()
 
-        ra = self.wise_view_parameters['ra']
-        dec = self.wise_view_parameters['dec']
-
-        flist = self.downloadPNGs(urls, ra, dec, outdir)
+        flist = self.downloadPNGs(urls, output_directory)
         size_list = []
         for f in flist:
             with Image.open(f) as image:
                 width = image.width * scale_factor
                 height = image.height * scale_factor
                 size_list.append((width,height))
-        postProcessing.applyPNGModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor)
+        PostProcessing.applyModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor)
 
         return flist, size_list
 
     @classmethod
-    def createGIF(cls, flist, gifname, duration=0.2, scale_factor=1.0):
+    def createGIF(cls, flist, gif_filepath, duration=0.2, scale_factor=1.0):
         """
         Construct a GIF animation from a list of PNG files.
 
@@ -461,8 +475,8 @@ class WiseViewQuery:
             flist : list
                 List of (full path) file names of PNG images from which to
                 construct the GIF animation.
-            gifname : str
-                Output file name (full path) for the GIF animation.
+            gif_filepath : str
+                Output path filename for the GIF animation.
             duration : float, optional
                 Time interval in seconds for each frame in the GIF blink (?).
             scale_factor : float, optional
@@ -487,23 +501,23 @@ class WiseViewQuery:
                     width = size[0]
                     height = size[1]
                     rescaled_size = (width * scale_factor, height * scale_factor)
-                    postProcessing.resize_png(f, rescaled_size)
+                    PostProcessing.resizeImage(f, rescaled_size)
 
         images = []
         for f in flist:
             images.append(imageio.imread(f))
 
-        imageio.mimsave(gifname, images, duration=duration)
+        imageio.mimsave(gif_filepath, images, duration=duration)
 
-    def createWiseViewGIF(self, outdir, gifname, duration=0.2, scale_factor=1.0, delete_pngs=True):
+    def createWiseViewGIF(self, output_directory, gif_filepath, duration=0.2, scale_factor=1.0, delete_pngs=True):
         """
         Create one WiseView animation at a desired central sky location.
 
         Parameters
         ----------
-            outdir : str
+            output_directory : str
                 Output directory of the image frames.
-            gifname : str
+            gif_filepath : str
                 Output path filename for the GIF animation.
             duration : float, optional
                 Time interval in seconds for each frame in the GIF.
@@ -524,8 +538,8 @@ class WiseViewQuery:
         # Counter, used to determine png chronology
         counter = 0
 
-        if (not os.path.exists(outdir)):
-            os.mkdir(outdir)
+        if (not os.path.exists(output_directory)):
+            os.mkdir(output_directory)
 
         urls = self.getURLs()
 
@@ -535,12 +549,12 @@ class WiseViewQuery:
         flist = []
 
         for url in urls:
-            fieldName = 'field-RA' + str(ra) + '-DEC' + str(dec) + '-' + str(counter) + '.png'
-            fname_dest = self.downloadPNG(url, outdir, fieldName)
+            field_name = self.getFilledFieldName(counter)
+            fname_dest = self.downloadPNG(url, output_directory, field_name)
             flist.append(fname_dest)
             counter += 1
 
-        self.createGIF(flist, gifname, duration=duration, scale_factor=scale_factor)
+        self.createGIF(flist, gif_filepath, duration=duration, scale_factor=scale_factor)
 
         if delete_pngs:
             print('Cleaning up...')
@@ -639,11 +653,11 @@ class WiseViewQuery:
             wise_view_FITS_url = self.generateWiseViewFITSURL(band)
             print(f'Requesting {band} FITS from WiseView...')
             if(band == 'W1'):
-                W1_fieldName = 'W1-field-RA' + str(self.wise_view_parameters["ra"]) + '-DEC' + str(self.wise_view_parameters["dec"]) + '-' + "-epoch0" + '.fits'
-                FITS_filenames.append(self.downloadFITS(wise_view_FITS_url, outdir, fieldName=W1_fieldName))
+                W1_field_name = 'W1-field-RA' + str(self.wise_view_parameters["ra"]) + '-DEC' + str(self.wise_view_parameters["dec"]) + '-' + "-epoch0" + '.fits'
+                FITS_filenames.append(self.downloadFITS(wise_view_FITS_url, outdir, field_name=W1_field_name))
             elif(band == 'W2'):
-                W2_fieldName = 'W2-field-RA' + str(self.wise_view_parameters["ra"]) + '-DEC' + str(self.wise_view_parameters["dec"]) + '-' + "-epoch0" + '.fits'
-                FITS_filenames.append(self.downloadFITS(wise_view_FITS_url, outdir, fieldName=W2_fieldName))
+                W2_field_name = 'W2-field-RA' + str(self.wise_view_parameters["ra"]) + '-DEC' + str(self.wise_view_parameters["dec"]) + '-' + "-epoch0" + '.fits'
+                FITS_filenames.append(self.downloadFITS(wise_view_FITS_url, outdir, field_name=W2_field_name))
 
         return FITS_filenames
 
