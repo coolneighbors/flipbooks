@@ -216,8 +216,8 @@ class unWISEQuery:
             upper_percentile = kwargs["percentile"]
             if(upper_percentile > 100):
                 raise ValueError("The upper percentile must be less than 100.")
-            elif(upper_percentile <= 50):
-                raise ValueError("The upper percentile must be greater than 50.")
+            elif(upper_percentile < 50):
+                raise ValueError("The upper percentile must be greater than or equal to 50.")
             lower_percentile = 100-upper_percentile
             min_bright = np.percentile(image_data, lower_percentile)
             max_bright = np.percentile(image_data, upper_percentile)
