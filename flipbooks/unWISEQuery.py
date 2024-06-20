@@ -221,13 +221,9 @@ class unWISEQuery:
             lower_percentile = 100-upper_percentile
             min_bright = np.percentile(image_data, lower_percentile)
             max_bright = np.percentile(image_data, upper_percentile)
-            brightness_width = 100
 
-            if(max_bright - min_bright < brightness_width):
-                brightness_difference = max_bright - min_bright
-                brightness_difference = brightness_width - brightness_difference
-                max_bright = max_bright + brightness_difference/2
-                min_bright = min_bright - brightness_difference/2
+            if(upper_percentile == 50):
+                return [min_bright, max_bright]
 
             default_min_bright = -50
             default_max_bright = 50
@@ -240,8 +236,7 @@ class unWISEQuery:
                         min_bright = default_min_bright
                         max_bright = default_max_bright
                     else:
-                        print(
-                            f"The current version of the unWISE data has a blank frame. Incrementing from {current_version} to neo{neo_version_number + 1}.")
+                        print(f"The current version of the unWISE data has a blank frame. Incrementing from {current_version} to neo{neo_version_number + 1}.")
                         self.unWISE_parameters["version"] = f"neo{neo_version_number + 1}"
                         self.filenames = self.request_unWISE_FITS()
                         self.w1_image_data, self.w2_image_data = self.getImageData(self.filenames)
@@ -251,11 +246,6 @@ class unWISEQuery:
                 else:
                     min_bright = default_min_bright
                     max_bright = default_max_bright
-
-            # Not sure if this helps or not
-            #if (max_bright > 300):
-            #    min_bright = default_min_bright
-            #    max_bright = default_max_bright
 
             if(max_bright < min_bright):
                 raise ValueError("The maximum brightness is less than the minimum brightness.")
