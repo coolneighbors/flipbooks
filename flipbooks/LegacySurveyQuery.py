@@ -1,7 +1,15 @@
 # TODO: Add all the functionality provided in "https://www.legacysurvey.org/svtips/"
+import os
+from io import BytesIO
+
+import requests
+from astropy.io import fits
+from PIL import Image
+import numpy as np
 
 class LegacySurveyQuery:
     def __init__(self, **kwargs):
+        self.input_parameters = kwargs
         self.legacy_survey_parameters = self.customParams(**kwargs)
 
     def defaultParams(self):
@@ -24,78 +32,20 @@ class LegacySurveyQuery:
         """
 
         params = {
-            "layer": "ls-dr10",
-            "ra": 133.786245,
-            "dec": -7.244372,
-            "zoom": 10,
-            "pixel_scale": 0.262,
-            "bands": "grz",
-            "size": 512,
-            "width": 512,
-            "height": 512,
-            "decamfoot": (None, None),
-            "bricks": False,
-            "ccds10": False,
-            "exps10": False,
-            "ccds9": False,
-            "ccds9n": False,
-            "ccds9s": False,
-            "exps9": False,
-            "masks-dr9": False,
-            "ccds8": False,
-            "ccds8n": False,
-            "ccds8s": False,
-            "exps8": False,
-            "ccds7": False,
-            "exps7": False,
-            "exps5": False,
-            "ccds6": False,
-            "ccds5": False,
-            "ccdssdss": False,
-            "unwise_tile": False,
-            "sources-dr10": False,
-            "sources-dr10-south": False,
-            "sources-dr9": False,
-            "sources-dr9n": False,
-            "sources-dr9s": False,
-            "sources-dr8": False,
-            "sources-dr8n": False,
-            "sources-dr8s": False,
-            "sources-dr7": False,
-            "sources-dr6": False,
-            "sources-dr5": False,
-            "gaia-dr2": False,
-            "gaia-edr3": False,
-            "hsc-dr2-cosmos": False,
-            "sdss-cat": False,
-            "manga": False,
-            "spectra": False,
-            "sdss-plates": False,
-            "spectra-deep2": False,
-            "desifoot": (None, None),
-            "desifiber": (None, None),
-            "desi-tiles-edr": False,
-            "desi-spec-edr": False,
-            "targets-dr9-main-dark": False,
-            "targets-dr9-main-bright": False,
-            "targets-dr9-main-sec-dark": False,
-            "targets-dr9-main-sec-bright": False,
-            "targets-dr9-sv3-dark": False,
-            "targets-dr9-sv3-bright": False,
-            "targets-dr9-sv3-sec-dark": False,
-            "targets-dr9-sv3-sec-bright": False,
-            "targets-dr9-sv1-dark": False,
-            "targets-dr9-sv1-bright": False,
-            "targets-dr9-sv1-sec-dark": False,
-            "targets-dr9-sv1-sec-bright": False,
-            "bright": False,
-            "tycho2": False,
-            "GCs-PNe": False,
-            "ngc": False,
-            "sga": False,
-            "sga-parent": False,
-            "photoz-dr9": False,
-            "const": False
+            "layer": "ls-dr10", # Image layer to display
+            "ra": 133.786245, # Right Ascension: Float in the range [0, 360]
+            "dec": -7.244372, # Declination: Float in the range [-90, 90]
+            "zoom": 10, # Zoom parameter: Integer in the range [1, 16]
+            "pixel_scale": 0.262, # Arcseconds per pixel (0.262 is the default and recommended value)
+            "bands": False, # Bands to display
+            "size": False, # Max size is 512
+            "width": False, # Max width is 512
+            "height": False, # Max height is 512
+            "blink": False, # Layer to blink to from the main layer
+            "overlays": [], # List of overlays to add to the viewer. Each overlay is a string or a dictionary with one key-value pair (for special cases).
+            "mark": False, # Mark points on the image (Format: [(RA1, DEC1), (RA2, DEC2), ...])
+            "poly": False, # Draw polygons on the image (or just lines) (Format: [[(RA1, DEC1), (RA2, DEC2), ...], [(RA1, DEC1), (RA2, DEC2), ...], ...])
+            "subimage": False, # 'Instead of getting a resampled image, you will get sub-images cut out from our data release' -https://www.legacysurvey.org/svtips/
         }
 
         return params
@@ -120,7 +70,7 @@ class LegacySurveyQuery:
             Default (RA, Dec) are those of WISE 0855.
         """
 
-        special_formating_params = {
+        special_dict_params = {
             "decamfoot": ("ra", "dec"),
             "desifoot": ("ra", "dec"),
             "desifiber": ("ra", "dec"),
@@ -394,28 +344,31 @@ class LegacySurveyQuery:
             overlays = kwargs["overlays"]
             if(type(overlays) == list):
                 for overlay in overlays:
-                    print("OVERLAY: ", overlay)
-                    print("valid_overlays: ", valid_overlays)
+                    overlay_dict = {}
+                    if(isinstance(overlay, dict)):
+                        overlay_dict = overlay
+                        if(len(overlay_dict) != 1):
+                            raise ValueError("The dictionary must have only one key-value pair.")
+                        overlay = list(overlay_dict.keys())[0]
+
+                    if(overlay in overlay_dictionary):
+                        old_overlay = overlay
+                        overlay = overlay_dictionary[overlay]
+
+                        if(overlay_dict != {}):
+                            overlay_dict = {overlay: overlay_dict[old_overlay]}
+
                     if(overlay in valid_overlays):
-                        if(overlay in special_formating_params):
-                            arg_value_list = []
-                            for arg in special_formating_params[overlay]:
-                                arg_value = params[arg]
-                                arg_value_list.append(arg_value)
-                            params[overlay] = tuple(arg_value_list)
-                        else:
-                            params[overlay] = True
+                        if(overlay in special_dict_params):
+                            argument_list = overlay_dict[overlay]
+                            overlay_string = overlay + "="
 
-                    elif(overlay in overlay_dictionary):
-
-                        if(overlay in special_formating_params):
-                            arg_value_list = []
-                            for arg in special_formating_params[overlay]:
-                                arg_value = params[arg]
-                                arg_value_list.append(arg_value)
-                            params[overlay_dictionary[overlay]] = tuple(arg_value_list)
+                            for arg in argument_list:
+                                overlay_string += f"{arg},"
+                            overlay_string = overlay_string[:-1]
+                            params["overlays"].append(overlay_string)
                         else:
-                            params[overlay_dictionary[overlay]] = True
+                            params["overlays"].append(overlay)
                     else:
                         raise ValueError(f"The following overlay is not valid: {overlay}. The available overlays are: {list(valid_overlays.keys())}.")
             else:
@@ -453,6 +406,49 @@ class LegacySurveyQuery:
         if(params["zoom"] < 1 or params["zoom"] > 16):
             raise ValueError("The zoom parameter must be an integer in the range [1, 16].")
 
+        if("blink" in kwargs):
+            blink_layer = kwargs["blink"]
+            if(blink_layer in layer_dictionary):
+                blink_layer = layer_dictionary[blink_layer]
+
+            if(blink_layer in valid_layers):
+                params["blink"] = blink_layer
+            else:
+                raise ValueError(f"The following blink layer is not valid: {blink_layer}. The available layers are: {list(valid_layers.keys())}.")
+
+        if("mark" in kwargs):
+            point_list = kwargs["mark"]
+            mark_string = ""
+
+            if(type(point_list) != list):
+                raise ValueError("The mark parameter must be a list iterables with two elements.")
+
+            for point_tuple in point_list:
+                if(len(point_tuple) != 2):
+                    raise ValueError("The point tuple must have two elements.")
+                else:
+                    mark_string += f"{point_tuple[0]},{point_tuple[1]};"
+            params["mark"] = mark_string[:-1]
+
+        if("poly" in kwargs):
+            poly_list = kwargs["poly"]
+            poly_string = ""
+
+            if(type(poly_list) != list):
+                raise ValueError("The poly parameter must be a list of lists of tuples with two elements.")
+
+            poly_string += ""
+            for point_list in poly_list:
+                for poly_point in point_list:
+
+                    if(len(poly_point) != 2):
+                        raise ValueError("The polygon tuple must have 2 elements.")
+                    else:
+                        poly_string += f"{poly_point[0]},{poly_point[1]},"
+                poly_string = poly_string[:-1] + ";"
+
+            params["poly"] = poly_string[:-1]
+
         return params
 
     def getParameters(self):
@@ -483,10 +479,189 @@ class LegacySurveyQuery:
                 elif(type(self.legacy_survey_parameters[key]) == bool):
                     url += f"{key}&"
                 else:
-                    url += f"{key}={self.legacy_survey_parameters[key]}&"
+                    # Handle special cases
+
+                    if(key == "overlays"):
+                        for overlay in self.legacy_survey_parameters[key]:
+                            url += f"{overlay}&"
+                    else:
+                        url += f"{key}={self.legacy_survey_parameters[key]}&"
         return url
 
-    def get
+    def getImage(self, output_directory=None, filename=None):
+        """
+        Get the image in the specified format.
+
+        Returns
+        -------
+        image_filepath : str
+            The filepath of the image.
+        """
+
+        if(output_directory is None):
+            output_directory = os.getcwd()
+
+        if (filename is None):
+            filename = "RA" + str(self.legacy_survey_parameters["ra"]) + "_DEC" + str(self.legacy_survey_parameters["dec"]) + f"layer{self.legacy_survey_parameters['layer']}" + ".png"
+
+        image_format = filename.split(".")[-1]
+
+        if(image_format.lower() not in ["jpg", "jpeg", "png",]):
+            raise ValueError(f"Invalid image format: {image_format}. The available formats are: jpg, jpeg, png.")
+
+        if(self.legacy_survey_parameters["subimage"]):
+            query_url = self.getFITSCutoutURL()
+        else:
+            query_url = self.getJPGCutoutURL()
+
+        response = requests.get(query_url)
+
+        # Verify that the response is valid
+        if not response.ok:
+            raise ValueError(f"Invalid response: {response.status_code}")
+
+        if (self.legacy_survey_parameters["subimage"]):
+            fits_filename = filename.replace(image_format.lower(), ".fits")
+
+            # Use the response bytes to create a FITS file
+            with open(f"{output_directory}/{fits_filename}", "wb") as file:
+                file.write(response.content)
+
+            # Create an image from the FITS file
+            image_filepath = self.convertFITS(f"{output_directory}/{fits_filename}", output_directory, filename, format=image_format)
+            os.remove(f"{output_directory}/{fits_filename}")
+            return image_filepath
+        else:
+            image = Image.open(BytesIO(response.content))
+
+            # Verify that the output directory exists
+            if not os.path.exists(output_directory):
+                raise FileNotFoundError(f"The output directory {output_directory} does not exist.")
+
+            image_filepath = f"{output_directory}/{filename}"
+
+            # Save the image
+            image.save(image_filepath)
+
+            return image_filepath
+
+    def getBlink(self, output_directory=None, filename=None, blink_speed=0.5):
+        """
+        Get the blink gif between the main layer and the blink layer.
+
+        Parameters
+        ----------
+        output_directory : str
+            The directory to save the image.
+        filename : str
+            The name of the gif file.
+        blink_speed : float
+            The loop speed of the gif in seconds.
+
+        Returns
+        -------
+        image_filepath : str
+            The filepath of the image.
+        """
+
+        if(self.legacy_survey_parameters["blink"] == False):
+            raise ValueError("The blink parameter must be set to a valid layer.")
+
+        if (output_directory is None):
+            output_directory = os.getcwd()
+
+        if (filename is None):
+            filename = "RA" + str(self.legacy_survey_parameters["ra"]) + "_DEC" + str(self.legacy_survey_parameters["dec"]) + f"layer{self.legacy_survey_parameters['layer']}" + ".png"
+
+        primary_layer_image_filepath = self.getImage(output_directory, "primary.png")
+
+        # Create a new LegacySurveyQuery object with the blink layer as the main layer
+
+        # Get the parameters of the current object but replace the layer with the blink layer
+        blink_parameters = self.input_parameters.copy()
+        blink_parameters["layer"] = self.legacy_survey_parameters["blink"]
+        blink_lsq = LegacySurveyQuery(**blink_parameters)
+
+        blink_layer_image_filepath = blink_lsq.getImage(output_directory, "blink.png")
+
+        # Create a gif from the two images using PIL
+        gif_filepath = f"{output_directory}/{filename.split('.')[0]}.gif"
+
+        try:
+            # Open the two images
+            image1 = Image.open(primary_layer_image_filepath)
+            image2 = Image.open(blink_layer_image_filepath)
+
+            # Ensure both images are in the same mode and size
+            image1 = image1.convert('RGBA')
+            image2 = image2.convert('RGBA')
+            image2 = image2.resize(image1.size)
+
+            # Create a list of images
+            images = [image1, image2]
+
+            # Set the duration for each frame (in milliseconds)
+            duration = int(blink_speed * 1000)  # Convert seconds to milliseconds
+
+            # Save as GIF with looping
+            images[0].save(gif_filepath, save_all=True, append_images=images[1:], duration=duration, loop=0)
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+        return gif_filepath
+
+
+    @staticmethod
+    def convertFITS(fits_filepath, output_directory=None, filename=None, format="PNG"):
+        """
+        Convert a FITS file to another image format.
+
+        Parameters
+        ----------
+        fits_filepath : str
+            The filepath of the FITS file.
+
+        output_directory : str
+            The directory to save the image.
+        filename : str
+            The name of the image file.
+
+        Returns
+        -------
+        image_filepath : str
+            The filepath of the image.
+        """
+
+        if(output_directory is None):
+            output_directory = os.getcwd()
+
+        if(filename is None):
+            filename = os.path.basename(fits_filepath)
+
+        # Remove the extension from the filename
+        filename = os.path.splitext(filename)[0] + f".{format.lower()}"
+
+        # Open the FITS file
+        with fits.open(fits_filepath) as hdul:
+            data = hdul[1].data
+
+        # Normalize the data to the range 0-255
+        data = np.nan_to_num(data)  # Convert NaNs to zero
+        data_min = np.min(data)
+        data_max = np.max(data)
+        data = (data - data_min) / (data_max - data_min) * 255
+        data = data.astype(np.uint8)
+
+        # Convert to an image
+        image = Image.fromarray(data)
+
+        # Save the image as a JPG
+        filepath = f"{output_directory}/{filename}"
+        image.save(filepath, format=format)
+
+        return filepath
+
 
 
 
