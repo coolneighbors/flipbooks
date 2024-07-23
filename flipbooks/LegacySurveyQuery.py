@@ -1,4 +1,3 @@
-# TODO: Add all the functionality provided in "https://www.legacysurvey.org/svtips/"
 import os
 from io import BytesIO
 
