@@ -69,7 +69,7 @@ class unWISEQuery:
 
         Notes
         -----
-            Default (RA, Dec) are those of WISE 0855.
+            Default (RA, DEC) are those of WISE 0855.
 
             Size refers to the pixel side-length of the image, which relates to FOV.
             unWise has a pixel-ratio of ~2.75 arc-seconds per pixel (Dan Caselden)
