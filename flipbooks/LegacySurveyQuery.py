@@ -392,9 +392,6 @@ class LegacySurveyQuery:
             else:
 
                 valid_kwargs = list(params.keys())
-                # Remove all the keys which are in valid_overlays
-                for key in valid_overlays:
-                    valid_kwargs.remove(key)
 
                 valid_kwargs.append("layer")
                 valid_kwargs.append("overlays")
@@ -544,7 +541,126 @@ class LegacySurveyQuery:
 
             return image_filepath
 
-    def getBlink(self, output_directory=None, filename=None, blink_speed=0.5):
+    def getFits(self, output_directory=None, filename=None):
+        """
+        Get the FITS file.
+
+        Parameters
+        ----------
+        output_directory : str
+            The directory to save the FITS file.
+        filename : str
+            The name of the FITS file.
+
+        Returns
+        -------
+        fits_filepath : str
+            The filepath of the FITS file.
+        """
+
+        if(output_directory is None):
+            output_directory = os.getcwd()
+
+        if (filename is None):
+            filename = "RA" + str(self.legacy_survey_parameters["ra"]) + "_DEC" + str(self.legacy_survey_parameters["dec"]) + f"layer{self.legacy_survey_parameters['layer']}" + ".fits"
+
+        # Check if the extension is FITS
+        if(filename.split(".")[-1].lower() != "fits"):
+            raise ValueError("The filename must have a FITS extension.")
+
+        # Get the FITS file
+        fits_filepath = f"{output_directory}/{filename}"
+        query_url = self.getFITSCutoutURL()
+
+        response = requests.get(query_url)
+
+        # Verify that the response is valid
+        if not response.ok:
+            raise ValueError(f"Invalid response: {response.status_code}")
+
+        # Use the response bytes to create a FITS file
+        with open(fits_filepath, "wb") as file:
+            file.write(response.content)
+
+        return fits_filepath
+
+    def getBlinkImages(self, output_directory=None, primary_layer_filename=None, blink_layer_filename=None):
+        """
+        Get the two images for the blink comparison.
+
+        Parameters
+        ----------
+        output_directory : str
+            The directory to save the images.
+        primary_layer_filename : str
+            The name of the primary image file.
+        blink_layer_filename : str
+            The name of the blink image file.
+
+        Returns
+        -------
+        primary_layer_image_filepath : str
+            The filepath of the primary layer image.
+        blink_layer_image_filepath : str
+            The filepath of the blink layer image.
+        """
+
+        if (self.legacy_survey_parameters["blink"] == False):
+            raise ValueError("The blink parameter must be set to a valid layer.")
+
+        if (output_directory is None):
+            output_directory = os.getcwd()
+
+        if(primary_layer_filename is None):
+            primary_layer_filename = "RA" + str(self.legacy_survey_parameters["ra"]) + "_DEC" + str(self.legacy_survey_parameters["dec"]) + f"layer{self.legacy_survey_parameters['layer']}" + ".png"
+
+        if(blink_layer_filename is None):
+            blink_layer_filename = "RA" + str(self.legacy_survey_parameters["ra"]) + "_DEC" + str(self.legacy_survey_parameters["dec"]) + f"layer{self.legacy_survey_parameters['blink']}" + ".png"
+
+        primary_filename_base, extension = os.path.splitext(primary_layer_filename)
+        primary_layer_image_filepath = self.getImage(output_directory, primary_filename_base + "_primary" + extension)
+
+        # Get the parameters of the current object but replace the layer with the blink layer
+        blink_parameters = self.input_parameters.copy()
+        blink_parameters["layer"] = self.legacy_survey_parameters["blink"]
+        blink_lsq = LegacySurveyQuery(**blink_parameters)
+
+        # Get the pixel scale for both the primary and blink layers so that the images are the same size on the sky
+
+        # Get the pixel scale for the primary layer
+        primary_fits_filepath = self.getFits(output_directory, primary_filename_base + ".fits")
+        with fits.open(primary_fits_filepath) as hdul:
+            primary_pixel_scale = hdul[0].header["CD2_2"] * 3600  # Convert from degrees to arcseconds
+            primary_image_width = hdul[0].header["IMAGEW"]
+            primary_image_height = hdul[0].header["IMAGEH"]
+
+        blink_filename_base, extension = os.path.splitext(blink_layer_filename)
+
+        # Get the pixel scale for the blink layer
+        blink_fits_filepath = blink_lsq.getFits(output_directory, blink_filename_base + ".fits")
+        with fits.open(blink_fits_filepath) as hdul:
+            blink_pixel_scale = hdul[0].header["CD2_2"] * 3600
+
+        # Find the necessary width and height for the blink layer to have the same size as the primary layer
+        scaled_blink_width = int((primary_pixel_scale / blink_pixel_scale) * primary_image_width)
+        scaled_blink_height = int((primary_pixel_scale / blink_pixel_scale) * primary_image_height)
+
+        # Delete the temporary FITS files
+        os.remove(primary_fits_filepath)
+        os.remove(blink_fits_filepath)
+
+        # Setup a new LegacySurveyQuery object for the blink layer with the scaled width and height
+        blink_parameters = self.input_parameters.copy()
+        blink_parameters["layer"] = self.legacy_survey_parameters["blink"]
+        blink_parameters.update({"width": scaled_blink_width, "height": scaled_blink_height})
+        blink_lsq = LegacySurveyQuery(**blink_parameters)
+
+        blink_layer_image_filepath = blink_lsq.getImage(output_directory, blink_filename_base + "_blink." + extension)
+
+        return primary_layer_image_filepath, blink_layer_image_filepath
+
+
+    def getBlinkGif(self, output_directory=None, filename=None, blink_speed=0.5):
         """
         Get the blink gif between the main layer and the blink layer.
 
@@ -563,28 +679,21 @@ class LegacySurveyQuery:
             The filepath of the image.
         """
 
-        if(self.legacy_survey_parameters["blink"] == False):
+        if (self.legacy_survey_parameters["blink"] == False):
             raise ValueError("The blink parameter must be set to a valid layer.")
 
         if (output_directory is None):
             output_directory = os.getcwd()
 
         if (filename is None):
-            filename = "RA" + str(self.legacy_survey_parameters["ra"]) + "_DEC" + str(self.legacy_survey_parameters["dec"]) + f"layer{self.legacy_survey_parameters['layer']}" + ".png"
+            filename = "RA" + str(self.legacy_survey_parameters["ra"]) + "_DEC" + str(self.legacy_survey_parameters["dec"]) + f"layer{self.legacy_survey_parameters['layer']}-{self.legacy_survey_parameters['blink']}" + ".png"
 
-        primary_layer_image_filepath = self.getImage(output_directory, "primary.png")
+        primary_layer_image_filepath, blink_layer_image_filepath = self.getBlinkImages(output_directory)
 
-        # Create a new LegacySurveyQuery object with the blink layer as the main layer
-
-        # Get the parameters of the current object but replace the layer with the blink layer
-        blink_parameters = self.input_parameters.copy()
-        blink_parameters["layer"] = self.legacy_survey_parameters["blink"]
-        blink_lsq = LegacySurveyQuery(**blink_parameters)
-
-        blink_layer_image_filepath = blink_lsq.getImage(output_directory, "blink.png")
+        filename_base, extension = os.path.splitext(filename)
 
         # Create a gif from the two images using PIL
-        gif_filepath = f"{output_directory}/{filename.split('.')[0]}.gif"
+        gif_filepath = f"{output_directory}/{filename_base}.gif"
 
         try:
             # Open the two images
@@ -608,8 +717,11 @@ class LegacySurveyQuery:
         except Exception as e:
             print(f"An error occurred: {e}")
 
-        return gif_filepath
+        # Remove the temporary images
+        os.remove(primary_layer_image_filepath)
+        os.remove(blink_layer_image_filepath)
 
+        return gif_filepath
 
     @staticmethod
     def convertFITS(fits_filepath, output_directory=None, filename=None, format="PNG"):
@@ -637,6 +749,22 @@ class LegacySurveyQuery:
 
         if(filename is None):
             filename = os.path.basename(fits_filepath)
+
+        # Verify that the output directory exists
+        if not os.path.exists(output_directory):
+            raise FileNotFoundError(f"The output directory {output_directory} does not exist.")
+
+        # Verify that the FITS file exists
+        if not os.path.exists(fits_filepath):
+            raise FileNotFoundError(f"The FITS file {fits_filepath} does not exist.")
+
+        # Verify that the format is valid
+        if format.lower() not in ["png", "jpg", "jpeg"]:
+            raise ValueError(f"Invalid format: {format}. The available formats are: PNG, JPG, JPEG.")
+
+        # Verify that the filename has the correct extension
+        if not filename.endswith(".fits"):
+            raise ValueError("The filename must have a FITS extension.")
 
         # Remove the extension from the filename
         filename = os.path.splitext(filename)[0] + f".{format.lower()}"
