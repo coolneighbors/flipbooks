@@ -670,7 +670,7 @@ class LegacySurveyQuery:
         blink_parameters.update({"width": scaled_blink_width, "height": scaled_blink_height})
         blink_lsq = LegacySurveyQuery(**blink_parameters)
 
-        blink_layer_image_filepath = blink_lsq.getImage(output_directory, blink_filename_base + "_blink." + extension)
+        blink_layer_image_filepath = blink_lsq.getImage(output_directory, blink_filename_base + "_blink" + extension)
         
         image_sizes = [(primary_image_width, primary_image_height), (scaled_blink_width, scaled_blink_height)]
         
