@@ -492,6 +492,9 @@ class LegacySurveyQuery:
         -------
         image_filepath : str
             The filepath of the image.
+
+        image_size : tuple
+            The size of the image.
         """
 
         if(output_directory is None):
@@ -539,7 +542,10 @@ class LegacySurveyQuery:
             # Save the image
             image.save(image_filepath)
 
-            return image_filepath
+            # Image size
+            image_size = image.size
+
+            return image_filepath, image_size
 
     def getFits(self, output_directory=None, filename=None):
         """
@@ -556,6 +562,8 @@ class LegacySurveyQuery:
         -------
         fits_filepath : str
             The filepath of the FITS file.
+        image_size : tuple
+            The size of the image.
         """
 
         if(output_directory is None):
@@ -582,7 +590,14 @@ class LegacySurveyQuery:
         with open(fits_filepath, "wb") as file:
             file.write(response.content)
 
-        return fits_filepath
+        # Get the image size
+        with fits.open(fits_filepath) as hdul:
+            image_width = hdul[0].header["IMAGEW"]
+            image_height = hdul[0].header["IMAGEH"]
+
+        image_size = (image_width, image_height)
+
+        return fits_filepath, image_size
 
     def getBlinkImages(self, output_directory=None, primary_layer_filename=None, blink_layer_filename=None):
         """
@@ -677,6 +692,9 @@ class LegacySurveyQuery:
         -------
         image_filepath : str
             The filepath of the image.
+
+        image_size : tuple
+            The size of the image.
         """
 
         if (self.legacy_survey_parameters["blink"] == False):
@@ -695,6 +713,8 @@ class LegacySurveyQuery:
         # Create a gif from the two images using PIL
         gif_filepath = f"{output_directory}/{filename_base}.gif"
 
+        image_size = (None, None)
+
         try:
             # Open the two images
             image1 = Image.open(primary_layer_image_filepath)
@@ -704,6 +724,7 @@ class LegacySurveyQuery:
             image1 = image1.convert('RGBA')
             image2 = image2.convert('RGBA')
             image2 = image2.resize(image1.size)
+            image_size = image1.size
 
             # Create a list of images
             images = [image1, image2]
@@ -721,7 +742,7 @@ class LegacySurveyQuery:
         os.remove(primary_layer_image_filepath)
         os.remove(blink_layer_image_filepath)
 
-        return gif_filepath
+        return gif_filepath, image_size
 
     @staticmethod
     def convertFITS(fits_filepath, output_directory=None, filename=None, format="PNG"):
