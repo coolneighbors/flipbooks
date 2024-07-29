@@ -643,7 +643,7 @@ class LegacySurveyQuery:
         # Get the pixel scale for both the primary and blink layers so that the images are the same size on the sky
 
         # Get the pixel scale for the primary layer
-        primary_fits_filepath = self.getFits(output_directory, primary_filename_base + ".fits")
+        primary_fits_filepath, image_size = self.getFits(output_directory, primary_filename_base + ".fits")
         with fits.open(primary_fits_filepath) as hdul:
             primary_pixel_scale = hdul[0].header["CD2_2"] * 3600  # Convert from degrees to arcseconds
             primary_image_width = hdul[0].header["IMAGEW"]
@@ -652,7 +652,7 @@ class LegacySurveyQuery:
         blink_filename_base, extension = os.path.splitext(blink_layer_filename)
 
         # Get the pixel scale for the blink layer
-        blink_fits_filepath = blink_lsq.getFits(output_directory, blink_filename_base + ".fits")
+        blink_fits_filepath, image_size = blink_lsq.getFits(output_directory, blink_filename_base + ".fits")
         with fits.open(blink_fits_filepath) as hdul:
             blink_pixel_scale = hdul[0].header["CD2_2"] * 3600
 
