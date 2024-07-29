@@ -671,8 +671,10 @@ class LegacySurveyQuery:
         blink_lsq = LegacySurveyQuery(**blink_parameters)
 
         blink_layer_image_filepath = blink_lsq.getImage(output_directory, blink_filename_base + "_blink." + extension)
-
-        return primary_layer_image_filepath, blink_layer_image_filepath
+        
+        image_sizes = [(primary_image_width, primary_image_height), (scaled_blink_width, scaled_blink_height)]
+        
+        return [primary_layer_image_filepath, blink_layer_image_filepath], image_sizes
 
 
     def getBlinkGif(self, output_directory=None, filename=None, blink_speed=0.5):
