@@ -661,7 +661,7 @@ class LegacySurveyQuery:
 
         if(blink_fits_filepath is None):
             if(os.path.exists(primary_fits_filepath)):
-                return [primary_fits_filepath, None], [(primary_image_width, primary_image_height), None]
+                return [primary_layer_image_filepath, None], [(primary_image_width, primary_image_height), None]
             else:
                 return [None, None], [None, None]
 
