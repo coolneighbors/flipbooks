@@ -517,7 +517,7 @@ class LegacySurveyQuery:
 
         # Verify that the response is valid
         if not response.ok:
-            raise ValueError(f"Invalid response: {response.status_code}")
+            return None, None
 
         if (self.legacy_survey_parameters["subimage"]):
             fits_filename = filename.replace(image_format.lower(), ".fits")
@@ -584,7 +584,7 @@ class LegacySurveyQuery:
 
         # Verify that the response is valid
         if not response.ok:
-            raise ValueError(f"Invalid response: {response.status_code}")
+            return None, None
 
         # Use the response bytes to create a FITS file
         with open(fits_filepath, "wb") as file:
@@ -633,17 +633,22 @@ class LegacySurveyQuery:
             blink_layer_filename = "RA" + str(self.legacy_survey_parameters["ra"]) + "_DEC" + str(self.legacy_survey_parameters["dec"]) + f"layer{self.legacy_survey_parameters['blink']}" + ".png"
 
         primary_filename_base, extension = os.path.splitext(primary_layer_filename)
-        primary_layer_image_filepath = self.getImage(output_directory, primary_filename_base + "_primary" + extension)
+        primary_layer_image_filepath, image_size = self.getImage(output_directory, primary_filename_base + "_primary" + extension)
 
         # Get the parameters of the current object but replace the layer with the blink layer
         blink_parameters = self.input_parameters.copy()
-        blink_parameters["layer"] = self.legacy_survey_parameters["blink"]
+        blink_parameters["layer"], blink_parameters["blink"] = self.legacy_survey_parameters["blink"], self.legacy_survey_parameters["layer"]
+
         blink_lsq = LegacySurveyQuery(**blink_parameters)
 
         # Get the pixel scale for both the primary and blink layers so that the images are the same size on the sky
 
         # Get the pixel scale for the primary layer
         primary_fits_filepath, image_size = self.getFits(output_directory, primary_filename_base + ".fits")
+
+        if(primary_fits_filepath is None):
+            return None, None
+
         with fits.open(primary_fits_filepath) as hdul:
             primary_pixel_scale = hdul[0].header["CD2_2"] * 3600  # Convert from degrees to arcseconds
             primary_image_width = hdul[0].header["IMAGEW"]
@@ -653,6 +658,10 @@ class LegacySurveyQuery:
 
         # Get the pixel scale for the blink layer
         blink_fits_filepath, image_size = blink_lsq.getFits(output_directory, blink_filename_base + ".fits")
+
+        if(blink_fits_filepath is None):
+            return None, None
+
         with fits.open(blink_fits_filepath) as hdul:
             blink_pixel_scale = hdul[0].header["CD2_2"] * 3600
 
@@ -670,7 +679,7 @@ class LegacySurveyQuery:
         blink_parameters.update({"width": scaled_blink_width, "height": scaled_blink_height})
         blink_lsq = LegacySurveyQuery(**blink_parameters)
 
-        blink_layer_image_filepath = blink_lsq.getImage(output_directory, blink_filename_base + "_blink" + extension)
+        blink_layer_image_filepath, image_size = blink_lsq.getImage(output_directory, blink_filename_base + "_blink" + extension)
         
         image_sizes = [(primary_image_width, primary_image_height), (scaled_blink_width, scaled_blink_height)]
         
@@ -708,7 +717,10 @@ class LegacySurveyQuery:
         if (filename is None):
             filename = "RA" + str(self.legacy_survey_parameters["ra"]) + "_DEC" + str(self.legacy_survey_parameters["dec"]) + f"layer{self.legacy_survey_parameters['layer']}-{self.legacy_survey_parameters['blink']}" + ".png"
 
-        primary_layer_image_filepath, blink_layer_image_filepath = self.getBlinkImages(output_directory)
+        image_filepaths, image_sizes = self.getBlinkImages(output_directory)
+
+        primary_layer_image_filepath = image_filepaths[0]
+        blink_layer_image_filepath = image_filepaths[1]
 
         filename_base, extension = os.path.splitext(filename)
 
