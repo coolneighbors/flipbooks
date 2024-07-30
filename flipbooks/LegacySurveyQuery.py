@@ -547,7 +547,7 @@ class LegacySurveyQuery:
 
             return image_filepath, image_size
 
-    def getFits(self, output_directory=None, filename=None):
+    def getFITS(self, output_directory=None, filename=None):
         """
         Get the FITS file.
 
@@ -644,10 +644,10 @@ class LegacySurveyQuery:
         # Get the pixel scale for both the primary and blink layers so that the images are the same size on the sky
 
         # Get the pixel scale for the primary layer
-        primary_fits_filepath, image_size = self.getFits(output_directory, primary_filename_base + ".fits")
+        primary_fits_filepath, image_size = self.getFITS(output_directory, primary_filename_base + ".fits")
 
         if(primary_fits_filepath is None):
-            return None, None
+            return [None, None], [None, None]
 
         with fits.open(primary_fits_filepath) as hdul:
             primary_pixel_scale = hdul[0].header["CD2_2"] * 3600  # Convert from degrees to arcseconds
@@ -657,10 +657,13 @@ class LegacySurveyQuery:
         blink_filename_base, extension = os.path.splitext(blink_layer_filename)
 
         # Get the pixel scale for the blink layer
-        blink_fits_filepath, image_size = blink_lsq.getFits(output_directory, blink_filename_base + ".fits")
+        blink_fits_filepath, image_size = blink_lsq.getFITS(output_directory, blink_filename_base + ".fits")
 
         if(blink_fits_filepath is None):
-            return None, None
+            if(os.path.exists(primary_fits_filepath)):
+                return [primary_fits_filepath, None], [(primary_image_width, primary_image_height), None]
+            else:
+                return [None, None], [None, None]
 
         with fits.open(blink_fits_filepath) as hdul:
             blink_pixel_scale = hdul[0].header["CD2_2"] * 3600
@@ -685,8 +688,7 @@ class LegacySurveyQuery:
         
         return [primary_layer_image_filepath, blink_layer_image_filepath], image_sizes
 
-
-    def getBlinkGif(self, output_directory=None, filename=None, blink_speed=0.5):
+    def getBlinkGIF(self, output_directory=None, filename=None, blink_speed=0.5):
         """
         Get the blink gif between the main layer and the blink layer.
 
