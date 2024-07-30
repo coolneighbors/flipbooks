@@ -660,7 +660,9 @@ class LegacySurveyQuery:
         blink_fits_filepath, image_size = blink_lsq.getFITS(output_directory, blink_filename_base + ".fits")
 
         if(blink_fits_filepath is None):
-            if(os.path.exists(primary_fits_filepath)):
+            if (os.path.exists(primary_fits_filepath)):
+                os.remove(primary_fits_filepath)
+            if(os.path.exists(primary_layer_image_filepath)):
                 return [primary_layer_image_filepath, None], [(primary_image_width, primary_image_height), None]
             else:
                 return [None, None], [None, None]
