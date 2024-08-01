@@ -13,9 +13,6 @@ from PIL import Image, ImageDraw
 import multiprocessing as mp
 import os
 
-
-
-
 #rescales pngs
 def rescale(file_path, scale_factor):
     with Image.open(file_path) as im:
@@ -24,7 +21,6 @@ def rescale(file_path, scale_factor):
         height = size[1]
         rescaled_size = (width * scale_factor, height * scale_factor)
         resizeImage(file_path, rescaled_size)
-
 
 def resizeImage(file_path, size):
     """

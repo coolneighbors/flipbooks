@@ -35,7 +35,8 @@ class LegacySurveyQuery:
             "ra": 133.786245, # Right Ascension: Float in the range [0, 360]
             "dec": -7.244372, # Declination: Float in the range [-90, 90]
             "zoom": 10, # Zoom parameter: Integer in the range [1, 16]
-            "pixel_scale": 0.262, # Arcseconds per pixel (0.262 is the default and recommended value)
+            "pixscale": 0.262, # Arcseconds per pixel (0.262 is the default and recommended value)
+            "fov": False, # Desired image field of view, in arcseconds
             "bands": False, # Bands to display
             "size": False, # Max size is 512
             "width": False, # Max width is 512
@@ -445,6 +446,49 @@ class LegacySurveyQuery:
 
             params["poly"] = poly_string[:-1]
 
+        if("size" in kwargs):
+
+            if("width" in kwargs or "height" in kwargs):
+                raise ValueError("The size parameter cannot be used with the width or height parameters.")
+
+            if("fov" in kwargs):
+                raise ValueError("The size parameter cannot be used with the fov parameter.")
+
+            try:
+                size = int(kwargs["size"])
+            except ValueError:
+                raise ValueError("The size parameter must be an integer.")
+
+            params["size"] = size
+
+        if("width" in kwargs):
+            try:
+                width = int(kwargs["width"])
+            except ValueError:
+                raise ValueError("The width parameter must be an integer.")
+
+            params["width"] = width
+
+        if("height" in kwargs):
+            try:
+                height = int(kwargs["height"])
+            except ValueError:
+                raise ValueError("The height parameter must be an integer.")
+
+            params["height"] = height
+
+        if("fov" in kwargs):
+
+            if("size" in kwargs or "width" in kwargs or "height" in kwargs):
+                raise ValueError("The fov parameter cannot be used with the size, width, or height parameters.")
+
+            try:
+                fov = float(kwargs["fov"])
+            except ValueError:
+                raise ValueError("The fov parameter must be a number.")
+
+            params["fov"] = fov
+
         return params
 
     def getParameters(self):
@@ -476,10 +520,13 @@ class LegacySurveyQuery:
                     url += f"{key}&"
                 else:
                     # Handle special cases
-
                     if(key == "overlays"):
                         for overlay in self.legacy_survey_parameters[key]:
                             url += f"{overlay}&"
+                    elif(key == "fov"):
+                        pixel_scale = self.legacy_survey_parameters["pixscale"]
+                        size = int(self.legacy_survey_parameters["fov"] / pixel_scale)
+                        url += f"size={size}&"
                     else:
                         url += f"{key}={self.legacy_survey_parameters[key]}&"
         return url
@@ -633,62 +680,18 @@ class LegacySurveyQuery:
             blink_layer_filename = "RA" + str(self.legacy_survey_parameters["ra"]) + "_DEC" + str(self.legacy_survey_parameters["dec"]) + f"layer{self.legacy_survey_parameters['blink']}" + ".png"
 
         primary_filename_base, extension = os.path.splitext(primary_layer_filename)
-        primary_layer_image_filepath, image_size = self.getImage(output_directory, primary_filename_base + "_primary" + extension)
+        primary_layer_image_filepath, primary_image_size = self.getImage(output_directory, primary_filename_base + "_primary" + extension)
 
         # Get the parameters of the current object but replace the layer with the blink layer
         blink_parameters = self.input_parameters.copy()
         blink_parameters["layer"], blink_parameters["blink"] = self.legacy_survey_parameters["blink"], self.legacy_survey_parameters["layer"]
-
         blink_lsq = LegacySurveyQuery(**blink_parameters)
-
-        # Get the pixel scale for both the primary and blink layers so that the images are the same size on the sky
-
-        # Get the pixel scale for the primary layer
-        primary_fits_filepath, image_size = self.getFITS(output_directory, primary_filename_base + ".fits")
-
-        if(primary_fits_filepath is None):
-            return [None, None], [None, None]
-
-        with fits.open(primary_fits_filepath) as hdul:
-            primary_pixel_scale = hdul[0].header["CD2_2"] * 3600  # Convert from degrees to arcseconds
-            primary_image_width = hdul[0].header["IMAGEW"]
-            primary_image_height = hdul[0].header["IMAGEH"]
 
         blink_filename_base, extension = os.path.splitext(blink_layer_filename)
 
-        # Get the pixel scale for the blink layer
-        blink_fits_filepath, image_size = blink_lsq.getFITS(output_directory, blink_filename_base + ".fits")
+        blink_layer_image_filepath, blink_image_size = blink_lsq.getImage(output_directory, blink_filename_base + "_blink" + extension)
 
-        if(blink_fits_filepath is None):
-            if (os.path.exists(primary_fits_filepath)):
-                os.remove(primary_fits_filepath)
-            if(os.path.exists(primary_layer_image_filepath)):
-                return [primary_layer_image_filepath, None], [(primary_image_width, primary_image_height), None]
-            else:
-                return [None, None], [None, None]
-
-        with fits.open(blink_fits_filepath) as hdul:
-            blink_pixel_scale = hdul[0].header["CD2_2"] * 3600
-
-        # Find the necessary width and height for the blink layer to have the same size as the primary layer
-        scaled_blink_width = int((primary_pixel_scale / blink_pixel_scale) * primary_image_width)
-        scaled_blink_height = int((primary_pixel_scale / blink_pixel_scale) * primary_image_height)
-
-        # Delete the temporary FITS files
-        os.remove(primary_fits_filepath)
-        os.remove(blink_fits_filepath)
-
-        # Setup a new LegacySurveyQuery object for the blink layer with the scaled width and height
-        blink_parameters = self.input_parameters.copy()
-        blink_parameters["layer"] = self.legacy_survey_parameters["blink"]
-        blink_parameters.update({"width": scaled_blink_width, "height": scaled_blink_height})
-        blink_lsq = LegacySurveyQuery(**blink_parameters)
-
-        blink_layer_image_filepath, image_size = blink_lsq.getImage(output_directory, blink_filename_base + "_blink" + extension)
-        
-        image_sizes = [(primary_image_width, primary_image_height), (scaled_blink_width, scaled_blink_height)]
-        
-        return [primary_layer_image_filepath, blink_layer_image_filepath], image_sizes
+        return [primary_layer_image_filepath, blink_layer_image_filepath], [primary_image_size, blink_image_size]
 
     def getBlinkGIF(self, output_directory=None, filename=None, blink_speed=0.5):
         """
@@ -731,30 +734,30 @@ class LegacySurveyQuery:
         # Create a gif from the two images using PIL
         gif_filepath = f"{output_directory}/{filename_base}.gif"
 
-        image_size = (None, None)
+        # Open the two images
+        primary_image = Image.open(primary_layer_image_filepath)
+        blink_image = Image.open(blink_layer_image_filepath)
 
-        try:
-            # Open the two images
-            image1 = Image.open(primary_layer_image_filepath)
-            image2 = Image.open(blink_layer_image_filepath)
+        # Ensure both images are in the same mode and size
+        primary_image = primary_image.convert('RGBA')
+        blink_image = blink_image.convert('RGBA')
 
-            # Ensure both images are in the same mode and size
-            image1 = image1.convert('RGBA')
-            image2 = image2.convert('RGBA')
-            image2 = image2.resize(image1.size)
-            image_size = image1.size
+        # Check if the image sizes are the same
+        if(primary_image.size != blink_image.size):
+            raise ValueError("The provided images must have the same size.")
 
-            # Create a list of images
-            images = [image1, image2]
+        image_size = primary_image.size
 
-            # Set the duration for each frame (in milliseconds)
-            duration = int(blink_speed * 1000)  # Convert seconds to milliseconds
+        # Create a list of images
+        images = [primary_image, blink_image]
 
-            # Save as GIF with looping
-            images[0].save(gif_filepath, save_all=True, append_images=images[1:], duration=duration, loop=0)
+        # Set the duration for each frame (in milliseconds)
+        duration = int(blink_speed * 1000)  # Convert seconds to milliseconds
 
-        except Exception as e:
-            print(f"An error occurred: {e}")
+        # Append the image with the centers aligned without resizing
+
+        # Save as GIF with looping
+        images[0].save(gif_filepath, save_all=True, append_images=images[1:], duration=duration, loop=0)
 
         # Remove the temporary images
         os.remove(primary_layer_image_filepath)
