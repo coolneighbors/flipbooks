@@ -419,7 +419,7 @@ class WiseViewQuery:
 
     def downloadWiseViewData(self, output_directory, scale_factor=1.0, addGrid=False, gridCount=5, gridType = "Solid", gridColor = (0,0,0)):
         """
-        Generates a set of PNG files for the available set of data from WiseView (which is from the unWISE data)
+        Generates a set of modified PNG files for the available set of data from WiseView (which is from the unWISE data)
 
         Parameters
         ----------

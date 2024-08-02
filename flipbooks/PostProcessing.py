@@ -118,6 +118,7 @@ def earlyTerminationProtocol(flist):
         if (os.path.exists(f)):
             os.remove(f)
 
+"""
 def applyModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor):
     try:
         pool = mp.Pool()
@@ -128,11 +129,27 @@ def applyModifications(flist, scale_factor, addGrid, gridCount, gridType, gridCo
     except Exception as e:
         print("Exception of type " + str(type(e)) + " occurred in applyPNGModifications: " + str(e))
         earlyTerminationProtocol(flist)
+"""
 
+def applyModifications(flist, functions, function_args):
+    for i in range(len(functions)):
+        try:
+            pool = mp.Pool()
+            processes = [pool.apply_async(functions[i], args=(f, *function_args[i])) for f in flist]
+            # Wait for processes to complete so that the files are saved before the next step
+            pool.close()
+            pool.join()
+        except Exception as e:
+            print("Exception of type " + str(type(e)) + " occurred in applyPNGModifications: " + str(e))
+            earlyTerminationProtocol(flist)
 
-def scalePNGsAndApplyGrid(f, scale_factor, addGrid, gridCount, gridType, gridColor):
+def scalePNG(f, scale_factor):
     if(scale_factor != 1):
         rescale(f, scale_factor)
+
+def applyGridToPNG(f, addGrid, gridCount, gridType, gridColor):
     if(addGrid):
         applyGrid(f, gridCount, gridType, gridColor)
+
+
 
