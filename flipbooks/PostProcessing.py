@@ -135,7 +135,6 @@ def applyModificationFunctions(f, functions, function_args):
 
 def applyModifications(flist, functions, function_args):
     for f in flist:
-        print("File: " + f)
         if not os.path.exists(f):
             print(f"File {f} does not exist. Exiting.")
             return
