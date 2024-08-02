@@ -14,6 +14,8 @@ class LegacySurveyQuery:
         self.input_parameters = kwargs
         self.legacy_survey_parameters = self.customParams(**kwargs)
 
+        self.allow_empty_images = self.legacy_survey_parameters["allow_empty"]
+
     def defaultParams(self):
         """
         Get a default dictionary of the Legacy Survey API parameters.
@@ -49,6 +51,7 @@ class LegacySurveyQuery:
             "mark": False, # Mark points on the image (Format: [(RA1, DEC1), (RA2, DEC2), ...])
             "poly": False, # Draw polygons on the image (or just lines) (Format: [[(RA1, DEC1), (RA2, DEC2), ...], [(RA1, DEC1), (RA2, DEC2), ...], ...])
             "subimage": False, # 'Instead of getting a resampled image, you will get sub-images cut out from our data release' -https://www.legacysurvey.org/svtips/
+            "allow_empty": False, # 'If the requested position is outside the survey footprint, return an empty image instead of an error'
         }
 
         return params
@@ -492,6 +495,8 @@ class LegacySurveyQuery:
 
             params["fov"] = fov
 
+
+
         return params
 
     def getParameters(self):
@@ -545,6 +550,7 @@ class LegacySurveyQuery:
 
         image_size : tuple
             The size of the image.
+
         """
 
         if(output_directory is None):
@@ -562,6 +568,12 @@ class LegacySurveyQuery:
             query_url = self.getFITSCutoutURL()
         else:
             query_url = self.getJPGCutoutURL()
+
+        if(not self.allow_empty_images):
+            fits_query_url = self.getFITSCutoutURL()
+            fits_response = requests.get(fits_query_url)
+            if not fits_response.ok:
+                return None, None
 
         response = requests.get(query_url)
 
@@ -885,6 +897,28 @@ class LegacySurveyQuery:
                 img.close()
 
         return flist, size_list
+    
+    def dataExists(self):
+        """
+        Validate the query parameters by checking if the FITS cutout URL is valid and provides a response. If the blink parameter is set, it will also check if the blink layer has data.
+        In the case that one of the layers does not have data, the function will return False.
+        """
+        
+        query_url = self.getFITSCutoutURL()
+        response = requests.get(query_url)
+
+        if(response.ok):
+            if(self.legacy_survey_parameters["blink"] != False):
+                blink_parameters = self.input_parameters.copy()
+                blink_parameters["layer"], blink_parameters["blink"] = self.legacy_survey_parameters["blink"], self.legacy_survey_parameters["layer"]
+                blink_lsq = LegacySurveyQuery(**blink_parameters)
+                blink_url = blink_lsq.getFITSCutoutURL()
+                blink_response = requests.get(blink_url)
+
+                if(not blink_response.ok):
+                    return False
+
+        return response.ok
 
 
 
