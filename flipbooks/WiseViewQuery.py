@@ -460,8 +460,11 @@ class WiseViewQuery:
             with Image.open(f) as image:
                 width = image.width * scale_factor
                 height = image.height * scale_factor
-                size_list.append((width,height))
-        PostProcessing.applyModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor)
+                size_list.append((width, height))
+
+        functions = [PostProcessing.scalePNG, PostProcessing.applyGridToPNG]
+        function_args = [(scale_factor,), (addGrid, gridCount, gridType, gridColor)]
+        PostProcessing.applyModifications(flist, functions, function_args)
 
         return flist, size_list
 
