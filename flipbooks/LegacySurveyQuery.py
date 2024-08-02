@@ -6,6 +6,9 @@ from astropy.io import fits
 from PIL import Image
 import numpy as np
 
+from flipbooks import PostProcessing
+
+
 class LegacySurveyQuery:
     def __init__(self, **kwargs):
         self.input_parameters = kwargs
@@ -830,6 +833,58 @@ class LegacySurveyQuery:
         image.save(filepath, format=format)
 
         return filepath
+
+    def downloadModifiedLegacySurveyBlinkImages(self, output_directory=None, scale_factor=1.0, addGrid=False, gridCount=5, gridType = "Solid", gridColor = (0,0,0)):
+        """
+        Generates a set of modified blink image PNG files for the available set of data from the Legacy Survey API.
+
+        Parameters
+        ----------
+            output_directory : str
+                Output directory of the PNG files
+            scale_factor : float, optional
+                PNG image size scaling factor, use integer values to avoid pixel-value interpolation.
+                Uses Nearest-Neighbor algorithm.
+            addGrid : bool, optional
+                Boolean parameter which determines whether to overlay a grid on the PNG files. Defaults to False.
+            gridCount : int, optional
+                Number of grid lines to generate on the image (height and width). The default is 5.
+            gridType : str, optional
+                A string which determines the type of grid to overlay, with the available grid options being Solid,
+                Intersection, and Dashed. Defaults to Solid.
+            gridColor : tuple, optional
+                A 3 integer element tuple which represents the RGB values of the color
+
+        Returns
+        -------
+            flist : list of str
+                List of (full path) file names of PNG images
+
+        Notes
+        -----
+            Has the functionality that if output_directory doesn't currently exist, it will create it instead of previously where
+            we just asserted that it existed.
+        """
+
+        if (output_directory is None):
+            output_directory = os.getcwd()
+
+        if (not os.path.exists(output_directory)):
+            os.mkdir(output_directory)
+
+        flist, size_list = self.getBlinkImages(output_directory)
+
+        functions = [PostProcessing.scaleImage, PostProcessing.applyGridToImage]
+        function_args = [(scale_factor,), (addGrid, gridCount, gridType, gridColor)]
+        PostProcessing.applyModifications(flist, functions, function_args)
+
+        if(scale_factor != 1):
+            for index, f in enumerate(flist):
+                img = Image.open(f)
+                size_list[index] = img.size
+                img.close()
+
+        return flist, size_list
 
 
 

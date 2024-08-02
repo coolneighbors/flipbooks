@@ -462,7 +462,7 @@ class WiseViewQuery:
                 height = image.height * scale_factor
                 size_list.append((width, height))
 
-        functions = [PostProcessing.scalePNG, PostProcessing.applyGridToPNG]
+        functions = [PostProcessing.scaleImage, PostProcessing.applyGridToImage]
         function_args = [(scale_factor,), (addGrid, gridCount, gridType, gridColor)]
         PostProcessing.applyModifications(flist, functions, function_args)
 

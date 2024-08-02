@@ -14,12 +14,18 @@ import multiprocessing as mp
 import os
 
 #rescales pngs
-def rescale(file_path, scale_factor):
+def rescale(file_path, scale_factor, allow_non_integer_scaling = False):
     with Image.open(file_path) as im:
         size = im.size
         width = size[0]
         height = size[1]
-        rescaled_size = (width * scale_factor, height * scale_factor)
+
+        if(not allow_non_integer_scaling):
+            if(type(scale_factor) != int and scale_factor != int(scale_factor)):
+                raise ValueError("Scale factor must be an integer if allow_non_integer_scaling is False.")
+
+        rescaled_size = (int(width * scale_factor), int(height * scale_factor))
+
         resizeImage(file_path, rescaled_size)
 
 def resizeImage(file_path, size):
@@ -118,36 +124,37 @@ def earlyTerminationProtocol(flist):
         if (os.path.exists(f)):
             os.remove(f)
 
-"""
-def applyModifications(flist, scale_factor, addGrid, gridCount, gridType, gridColor):
+def applyModificationFunctions(f, functions, function_args):
+
+    for i in range(len(functions)):
+        try:
+            functions[i](f, *function_args[i])
+        except Exception as e:
+            print("Exception of type " + str(type(e)) + f" occurred in function '{functions[i].__name__}': " + str(e))
+            return
+
+def applyModifications(flist, functions, function_args):
+    for f in flist:
+        print("File: " + f)
+        if not os.path.exists(f):
+            print(f"File {f} does not exist. Exiting.")
+            return
+
     try:
         pool = mp.Pool()
-        processes = [pool.apply_async(scalePNGsAndApplyGrid, args=(f, scale_factor, addGrid, gridCount, gridType, gridColor)) for f in flist]
-        # Wait for processes to complete so that the files are saved before the next step
+        file_processes = [pool.apply_async(applyModificationFunctions, args=(f, functions, function_args)) for f in flist]
         pool.close()
         pool.join()
     except Exception as e:
-        print("Exception of type " + str(type(e)) + " occurred in applyPNGModifications: " + str(e))
+        print("Exception of type " + str(type(e)) + " occurred in applyModifications: " + str(e))
         earlyTerminationProtocol(flist)
-"""
 
-def applyModifications(flist, functions, function_args):
-    for i in range(len(functions)):
-        try:
-            pool = mp.Pool()
-            processes = [pool.apply_async(functions[i], args=(f, *function_args[i])) for f in flist]
-            # Wait for processes to complete so that the files are saved before the next step
-            pool.close()
-            pool.join()
-        except Exception as e:
-            print("Exception of type " + str(type(e)) + " occurred in applyPNGModifications: " + str(e))
-            earlyTerminationProtocol(flist)
+# Post-processing functions to be used in the applyModifications function
+def scaleImage(f, scale_factor, allow_non_integer_scaling=False):
+    if(scale_factor != 1 and scale_factor > 0):
+        rescale(f, scale_factor, allow_non_integer_scaling)
 
-def scalePNG(f, scale_factor):
-    if(scale_factor != 1):
-        rescale(f, scale_factor)
-
-def applyGridToPNG(f, addGrid, gridCount, gridType, gridColor):
+def applyGridToImage(f, addGrid, gridCount, gridType, gridColor):
     if(addGrid):
         applyGrid(f, gridCount, gridType, gridColor)
 
